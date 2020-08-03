@@ -44,6 +44,7 @@ jobs:
 
   build:
     name: Build
+    needs: release
     runs-on: ubuntu-latest
     strategy:
       matrix:
