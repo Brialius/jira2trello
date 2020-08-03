@@ -8,7 +8,7 @@ on:
 
 jobs:
   linter:
-    name: Sonar
+    name: Linters
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -20,6 +20,9 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           projectBaseDir: .
+      
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v1.2.1
 
   build:
     name: Build
@@ -45,4 +48,11 @@ jobs:
       env:
         GOOS: ${{ matrix.goos }}
         GOARCH: ${{ matrix.goarch }}
-      run: go build -v .
+      run: |
+        go build -v .
+        ls -laR
+
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        path: '.'
