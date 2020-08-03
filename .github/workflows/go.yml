@@ -52,7 +52,8 @@ jobs:
         GOARCH: ${{ matrix.goarch }}
       run: |
         go build -v -o jira2trello-${{ matrix.goos }}-${{ matrix.goarch }}\$GOEXE .
-        zip --junk-paths jira2trello-${{ matrix.goos }}-${{ matrix.goarch }} jira2trello-${{ matrix.goos }}-${{ matrix.goarch }}
+        ls -la
+        zip --junk-paths jira2trello-${{ matrix.goos }}-${{ matrix.goarch }} jira2trello-${{ matrix.goos }}-${{ matrix.goarch }}\$GOEXE
 
 #     - name: Upload a Build Artifact
 #       uses: actions/upload-artifact@v2
