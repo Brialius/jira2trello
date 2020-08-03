@@ -24,22 +24,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v1.2.1
         with:
-          version: v1.2.3
-
-  release:
-    name: Release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: 'test-release'
-          release_name: Release test
-          draft: true
-          prerelease: true
+          version: v1.2
 
   build:
     name: Build
@@ -78,16 +63,16 @@ jobs:
 #         run: |
 #           zip --junk-paths my-artifact README.md
 
-#       - name: Create Release
-#         id: create_release
-#         uses: actions/create-release@v1
-#         env:
-#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#         with:
-#           tag_name: ${{ github.ref }}
-#           release_name: Release ${{ github.ref }}
-#           draft: false
-#           prerelease: false
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: 'test-release'
+        release_name: Release test
+        draft: true
+        prerelease: true
 
     - name: Upload Release Asset
       id: upload-release-asset 
