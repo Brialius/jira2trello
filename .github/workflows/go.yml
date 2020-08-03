@@ -26,20 +26,20 @@ jobs:
         with:
           version: v1.30
   
-  release:
-    name: Create release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: 'test-release'
-          release_name: Release test
-          draft: true
-          prerelease: true
+#   release:
+#     name: Create release
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Create Release
+#         id: create_release
+#         uses: actions/create-release@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           tag_name: 'test-release'
+#           release_name: Release test
+#           draft: true
+#           prerelease: true
 
 
   build:
@@ -80,6 +80,19 @@ jobs:
 #       - name: Build project # This would actually build your project, using zip for an example artifact
 #         run: |
 #           zip --junk-paths my-artifact README.md
+
+    - name: Create Release
+      if: matrix.goos == 'linux'
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: 'test-release'
+        release_name: Release test
+        draft: true
+        prerelease: true
+
 
     - name: Upload Release Asset
       id: upload-release-asset 
