@@ -49,7 +49,7 @@ jobs:
         GOOS: ${{ matrix.goos }}
         GOARCH: ${{ matrix.goarch }}
       run: |
-        go build -v .
+        go build -v -o jira2trello-${{ matrix.goos }}-${{ matrix.goarch }} .
         ls -laR
 
     - name: Upload a Build Artifact
