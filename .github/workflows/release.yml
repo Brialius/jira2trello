@@ -1,30 +1,21 @@
-name: Go
+name: Release
 
 on:
   push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
 jobs:
-  linter:
-    name: Linters
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v2
-              
-#       - name: SonarCloud Scan
-#         uses: SonarSource/sonarcloud-github-action@v1.3
-#         env:
-#           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#   linter:
+#     name: Linters
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Check out code
+#         uses: actions/checkout@v2
+#       - name: Run golangci-lint
+#         uses: golangci/golangci-lint-action@v1.2.1
 #         with:
-#           projectBaseDir: .
-      
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v1.2.1
-        with:
-          version: v1.30
+#           version: v1.30
   
   release:
     name: Create release
@@ -36,8 +27,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: 'test-release'
-          release_name: Release test
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
           draft: true
           prerelease: true
       - name: Output Release URL File
@@ -74,35 +65,13 @@ jobs:
         GOOS: ${{ matrix.goos }}
         GOARCH: ${{ matrix.goarch }}
       run: |
-        goexe=`go env GOEXE`
-        go build -v -o jira2trello-${{ matrix.goos }}-${{ matrix.goarch }}`go env GOEXE` .
-        go env
-        zip --junk-paths jira2trello-${{ matrix.goos }}-${{ matrix.goarch }} jira2trello-${{ matrix.goos }}-${{ matrix.goarch }}`go env GOEXE`
-
-#     - name: Upload a Build Artifact
-#       uses: actions/upload-artifact@v2
-#       with:
-#         path: 'jira2trello-*.zip'
-
-#       - name: Build project # This would actually build your project, using zip for an example artifact
-#         run: |
-#           zip --junk-paths my-artifact README.md
+        go build -v -o jira2trello`go env GOEXE` .
+        zip --junk-paths jira2trello-${{ matrix.goos }}-${{ matrix.goarch }} jira2trello`go env GOEXE`
 
     - name: Load Release URL File from release job
       uses: actions/download-artifact@v1
       with:
         name: release_url
-#     - name: Create Release
-#       if: matrix.goos == 'linux'
-#       id: create_release
-#       uses: actions/create-release@v1
-#       env:
-#         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#       with:
-#         tag_name: 'test-release'
-#         release_name: Release test
-#         draft: true
-#         prerelease: true
 
     - name: Get Release File Name & Upload URL
       id: get_release_info
