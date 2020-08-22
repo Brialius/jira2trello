@@ -24,19 +24,13 @@ package app
 import (
 	"fmt"
 	"github.com/Brialius/jira2trello/internal/trello"
-	"github.com/spf13/viper"
 	"log"
-	"strings"
 )
 
-func Report(tSrv *trello.Client) {
+func Report(tSrv *trello.Client, users []*UserConfig) {
 	err := tSrv.Connect()
 	if err != nil {
 		log.Fatalf("Can't connect to trello: %s", err)
-	}
-
-	if err := viper.UnmarshalKey("users", &users); err != nil {
-		log.Fatalf("Can't get user config: %s", err)
 	}
 
 	for _, user := range users {
@@ -44,25 +38,20 @@ func Report(tSrv *trello.Client) {
 			"User: %s\n"+
 			"---------------------------------\n", user.Name)
 
-		fmt.Println("Getting Trello cards...")
-		trelloTasks := map[string]*trello.Card{}
-		cards, _ := tSrv.GetCards()
-		for _, card := range cards {
-			for _, labelId := range *card.IDLabels {
-				if labelId == tSrv.Labels.Jira && strings.Contains(card.IDMembers, user.TrelloId) {
-					trelloTasks[card.Key] = card
-				}
-			}
-		}
+		tCards := getTrelloTasks(tSrv, user)
 
-		fmt.Println("Searching current tasks..")
-		for _, tTask := range trelloTasks {
-			if tTask.ListID == tSrv.Lists.Done[:trello.IdLength] {
+		fmt.Println("Searching current trello tasks..")
+		for _, tTask := range tCards {
+			if tTask.IsInAnyOfLists([]string{tSrv.Lists.Done}) {
 				fmt.Println(tTask.Name + " - Done")
 				fmt.Println("https://jira.inbcu.com/browse/" + tTask.Key)
 				fmt.Println("---------------------------------------------")
-			} else if tTask.ListID == tSrv.Lists.Doing[:trello.IdLength] {
+			} else if tTask.IsInAnyOfLists([]string{tSrv.Lists.Doing}) {
 				fmt.Println(tTask.Name + " - In progress")
+				fmt.Println("https://jira.inbcu.com/browse/" + tTask.Key)
+				fmt.Println("---------------------------------------------")
+			} else if tTask.IsInAnyOfLists([]string{tSrv.Lists.Review}) {
+				fmt.Println(tTask.Name + " - In review")
 				fmt.Println("https://jira.inbcu.com/browse/" + tTask.Key)
 				fmt.Println("---------------------------------------------")
 			}

@@ -164,7 +164,7 @@ func (t *Client) CreateCard(card *Card) error {
 	return t.cli.CreateCard(&trello.Card{
 		Name:      card.Name,
 		IDLabels:  *card.IDLabels,
-		IDList:    card.ListID,
+		IDList:    card.ListID[:IdLength],
 		IDMembers: strings.Split(card.IDMembers, ","),
 		Desc:      card.Desc,
 	}, trello.Defaults())
@@ -175,7 +175,7 @@ func (t *Client) MoveCardToList(cardId, listId string) error {
 	if err != nil {
 		return err
 	}
-	return card.MoveToList(listId, trello.Defaults())
+	return card.MoveToList(listId[:IdLength], trello.Defaults())
 }
 
 func (t *Client) UpdateCardLabels(cardId, labels string) error {

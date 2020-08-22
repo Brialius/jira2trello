@@ -25,7 +25,6 @@ import (
 	"fmt"
 	"github.com/Brialius/jira2trello/internal/jira"
 	"github.com/Brialius/jira2trello/internal/trello"
-	"github.com/spf13/viper"
 	"log"
 	"os"
 	"reflect"
@@ -33,9 +32,7 @@ import (
 	"text/tabwriter"
 )
 
-var users []*UserConfig
-
-func Sync(jSrv *jira.Client, tSrv *trello.Client) {
+func Sync(jSrv *jira.Client, tSrv *trello.Client, users []*UserConfig) {
 	if err := jSrv.Connect(); err != nil {
 		log.Fatalf("Can't connect to jira server: %s", err)
 	}
@@ -45,114 +42,157 @@ func Sync(jSrv *jira.Client, tSrv *trello.Client) {
 		log.Fatalf("Can't connect to trello: %s", err)
 	}
 
-	if err := viper.UnmarshalKey("users", &users); err != nil {
-		log.Fatalf("Can't get user config: %s", err)
-	}
-
 	for _, user := range users {
 		fmt.Printf("---------------------------------\n"+
 			"User: %s\n"+
 			"---------------------------------\n", user.Name)
 
-		fmt.Println("Getting Jira tasks...")
-		jTasks, err := jSrv.GetUserTasks(user.Email)
+		jTasks, err := getJiraTasks(jSrv, user)
+		printJiraTasks(jTasks)
+
+		tCards := getTrelloTasks(tSrv, user)
+
+		err = syncTasks(jTasks, tSrv, tCards, user)
 		if err != nil {
-			log.Fatalf("can't get tasks for %s from jira server: %s", user.Email, err)
+			log.Fatalf("can't sync tasks: %s", err)
 		}
 
-		w := new(tabwriter.Writer)
-		w.Init(os.Stdout, 0, 0, 0, ' ', tabwriter.Debug)
-
-		for _, task := range jTasks {
-			_, _ = fmt.Fprintln(w, task.TabString())
+		err = syncCompletedTasks(tCards, jTasks, tSrv)
+		if err != nil {
+			log.Fatalf("can't sync completed tasks: %s", err)
 		}
-		_ = w.Flush()
+	}
+}
 
-		fmt.Println("Getting Trello cards...")
-		tCards := map[string]*trello.Card{}
-		cards, _ := tSrv.GetCards()
-		for _, card := range cards {
-			for _, labelId := range *card.IDLabels {
-				if labelId == tSrv.Labels.Jira && strings.Contains(card.IDMembers, user.TrelloId) {
-					tCards[card.Key] = card
-				}
-			}
-		}
-
-		fmt.Println("Sync tasks...")
-		for key, value := range jTasks {
-			list := tSrv.Lists.Todo
-			labels := make([]string, 0)
-			labels = append(labels, tSrv.Labels.Jira)
-			switch {
-			case strings.Contains(value.Status, "In Progress"):
-				list = tSrv.Lists.Doing
-			case strings.Contains(value.Status, "Dependency") || strings.Contains(value.Status, "Blocked"):
-				list = tSrv.Lists.Doing
-				labels = append(labels, tSrv.Labels.Blocked)
-			}
-			switch value.Type {
-			case "Story":
-				labels = append(labels, tSrv.Labels.Story)
-			case "User Story":
-				labels = append(labels, tSrv.Labels.Story)
-			case "Bug":
-				labels = append(labels, tSrv.Labels.Bug)
-			default:
-				labels = append(labels, tSrv.Labels.Task)
-			}
-			if tCard, ok := tCards[key]; !ok {
-				fmt.Printf("Adding %s to %s list..\n", value.Key, list[trello.IdLength+3:])
-				desc := value.Desc + "\nJira link: " + value.Link + "\nType: " + value.Type
-				if value.ParentKey != "" {
-					desc += "\nParent link: " + value.ParentLink
-				}
-				err = tSrv.CreateCard(&trello.Card{
-					Name:      key + " | " + value.Summary,
-					ListID:    list[:trello.IdLength],
-					Desc:      desc,
-					IDLabels:  &labels,
-					IDMembers: user.TrelloId,
-				})
+func syncCompletedTasks(tCards map[string]*trello.Card, jTasks map[string]*jira.Task, tSrv *trello.Client) error {
+	fmt.Println("Searching completed tasks..")
+	for key, tCard := range tCards {
+		if _, ok := jTasks[key]; !ok {
+			if tCard.ListID != tSrv.Lists.Done[:trello.IdLength] {
+				err := tSrv.MoveCardToList(tCard.ID, tSrv.Lists.Done[:trello.IdLength])
 				if err != nil {
-					log.Fatalf("can't add task to list: %s", err)
+					return fmt.Errorf("can't move card to `Done` list: %s", err)
 				}
-			} else {
-				// Update labels
-				if !reflect.DeepEqual(*tCard.IDLabels, labels) {
-					fmt.Printf("Updating labels for %s\n", tCard.Key)
-					err := tSrv.UpdateCardLabels(tCard.ID, strings.Join(labels, ","))
-					if err != nil {
-						log.Fatalf("can't update labels oncard `%s`: %s", tCard.Key, err)
-					}
-				}
-				// Update trello card list
-				if tCard.ListID != list[:trello.IdLength] {
-					if list == tSrv.Lists.Doing || list == tSrv.Lists.Todo {
-						if tCard.ListID == tSrv.Lists.Review[:trello.IdLength] || tCard.ListID == tSrv.Lists.Bucket[:trello.IdLength] {
-							continue
-						}
-					}
-					fmt.Printf("Moving %s to %s list\n", value.Key, list[trello.IdLength+3:])
-					err = tSrv.MoveCardToList(tCard.ID, list[:trello.IdLength])
-					if err != nil {
-						log.Fatalf("can't move card to list: %s", err)
-					}
-				}
-			}
-		}
-
-		fmt.Println("Searching completed tasks..")
-		for key, tCard := range tCards {
-			if _, ok := jTasks[key]; !ok {
-				if tCard.ListID != tSrv.Lists.Done[:trello.IdLength] {
-					err = tSrv.MoveCardToList(tCard.ID, tSrv.Lists.Done[:trello.IdLength])
-					if err != nil {
-						log.Fatalf("can't move card to `Done` list: %s", err)
-					}
-					fmt.Printf("%s is completed!\n", key)
-				}
+				fmt.Printf("%s is completed!\n", key)
 			}
 		}
 	}
+	return nil
+}
+
+func syncTasks(jTasks map[string]*jira.Task, tSrv *trello.Client, tCards map[string]*trello.Card, user *UserConfig) error {
+	fmt.Println("Sync tasks...")
+	for key, value := range jTasks {
+		list := tSrv.Lists.Todo
+		labels := make([]string, 0)
+		labels = append(labels, tSrv.Labels.Jira)
+		switch {
+		case strings.Contains(value.Status, "In Progress"):
+			list = tSrv.Lists.Doing
+		case strings.Contains(value.Status, "Dependency") || strings.Contains(value.Status, "Blocked"):
+			list = tSrv.Lists.Doing
+			labels = append(labels, tSrv.Labels.Blocked)
+		}
+		switch value.Type {
+		case "Story":
+			labels = append(labels, tSrv.Labels.Story)
+		case "User Story":
+			labels = append(labels, tSrv.Labels.Story)
+		case "Bug":
+			labels = append(labels, tSrv.Labels.Bug)
+		default:
+			labels = append(labels, tSrv.Labels.Task)
+		}
+		if tCard, ok := tCards[key]; !ok {
+			if err := addCardToList(value, list, tSrv, key, labels, user); err != nil {
+				return fmt.Errorf("can't add task to list: %s", err)
+			}
+		} else {
+			if err := updateCardLabels(tCard, labels, tSrv); err != nil {
+				return err
+			}
+			if err := updateCardList(tCard, list, tSrv, value); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func updateCardList(tCard *trello.Card, list string, tSrv *trello.Client, task *jira.Task) error {
+	if tCard.ListID != list[:trello.IdLength] {
+		if list == tSrv.Lists.Doing || list == tSrv.Lists.Todo {
+			if tCard.IsInAnyOfLists([]string{
+				tSrv.Lists.Bucket,
+				tSrv.Lists.Review,
+			}) {
+				return nil
+			}
+		}
+		fmt.Printf("Moving %s to %s list\n", task.Key, list[trello.IdLength+3:])
+		err := tSrv.MoveCardToList(tCard.ID, list)
+		if err != nil {
+			return fmt.Errorf("can't move card to list: %s", err)
+		}
+	}
+	return nil
+}
+
+func updateCardLabels(tCard *trello.Card, labels []string, tSrv *trello.Client) error {
+	if !reflect.DeepEqual(*tCard.IDLabels, labels) {
+		fmt.Printf("Updating labels for %s\n", tCard.Key)
+		err := tSrv.UpdateCardLabels(tCard.ID, strings.Join(labels, ","))
+		if err != nil {
+			return fmt.Errorf("can't update labels on card `%s`: %s", tCard.Key, err)
+		}
+	}
+	return nil
+}
+
+func addCardToList(task *jira.Task, list string, tSrv *trello.Client, key string, labels []string, user *UserConfig) error {
+	fmt.Printf("Adding %s to %s list..\n", task.Key, list[trello.IdLength+3:])
+	desc := task.Desc + "\nJira link: " + task.Link + "\nType: " + task.Type
+	if task.ParentKey != "" {
+		desc += "\nParent link: " + task.ParentLink
+	}
+	return tSrv.CreateCard(&trello.Card{
+		Name:      key + " | " + task.Summary,
+		ListID:    list,
+		Desc:      desc,
+		IDLabels:  &labels,
+		IDMembers: user.TrelloId,
+	})
+}
+
+func getTrelloTasks(tSrv *trello.Client, user *UserConfig) map[string]*trello.Card {
+	fmt.Println("Getting Trello cards...")
+	tCards := map[string]*trello.Card{}
+	cards, _ := tSrv.GetCards()
+	for _, card := range cards {
+		for _, labelId := range *card.IDLabels {
+			if labelId == tSrv.Labels.Jira && strings.Contains(card.IDMembers, user.TrelloId) {
+				tCards[card.Key] = card
+			}
+		}
+	}
+	return tCards
+}
+
+func printJiraTasks(jTasks map[string]*jira.Task) {
+	w := new(tabwriter.Writer)
+	w.Init(os.Stdout, 0, 0, 0, ' ', tabwriter.Debug)
+
+	for _, task := range jTasks {
+		_, _ = fmt.Fprintln(w, task.TabString())
+	}
+	_ = w.Flush()
+}
+
+func getJiraTasks(jSrv *jira.Client, user *UserConfig) (map[string]*jira.Task, error) {
+	fmt.Println("Getting Jira tasks...")
+	jTasks, err := jSrv.GetUserTasks(user.Email)
+	if err != nil {
+		log.Fatalf("can't get tasks for %s from jira server: %s", user.Email, err)
+	}
+	return jTasks, err
 }

@@ -41,12 +41,17 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		var cfg trello.Config
-		if err := viper.UnmarshalKey("trello", &cfg); err != nil {
+		var tCfg trello.Config
+		if err := viper.UnmarshalKey("trello", &tCfg); err != nil {
 			log.Fatalf("Can't parse Trello config: %s", err)
 		}
 
-		app.Report(trello.NewServer(cfg))
+		var cfg app.Config
+		if err := viper.UnmarshalKey("users", &cfg.Users); err != nil {
+			log.Fatalf("Can't parse users config: %s", err)
+		}
+
+		app.Report(trello.NewServer(tCfg), cfg.Users)
 	},
 }
 

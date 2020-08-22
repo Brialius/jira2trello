@@ -57,3 +57,12 @@ type Member struct {
 func (c *Card) String() string {
 	return fmt.Sprintf("%s | %s(%s): %s - %s", c.Key, c.List, c.ListID, c.Name, *c.IDLabels)
 }
+
+func (c *Card) IsInAnyOfLists(lists []string) bool {
+	for _, listId := range lists {
+		if c.ListID == listId[:IdLength] {
+			return true
+		}
+	}
+	return false
+}

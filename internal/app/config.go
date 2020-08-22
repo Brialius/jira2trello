@@ -28,5 +28,5 @@ type UserConfig struct {
 }
 
 type Config struct {
-	Users []UserConfig
+	Users []*UserConfig
 }
