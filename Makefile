@@ -61,7 +61,7 @@ mod-refresh: ## Refresh modules
 
 .PHONY: version
 version:
-	@echo $(VERSION)-$(BUILD)
+	@echo $(VERSION)
 
 .PHONY: release
 release:
