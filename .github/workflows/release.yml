@@ -6,17 +6,6 @@ on:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
 jobs:
-#   linter:
-#     name: Linters
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Check out code
-#         uses: actions/checkout@v2
-#       - name: Run golangci-lint
-#         uses: golangci/golangci-lint-action@v1.2.1
-#         with:
-#           version: v1.30
-  
   release:
     name: Create release
     runs-on: ubuntu-latest
