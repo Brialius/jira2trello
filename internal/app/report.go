@@ -19,24 +19,18 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package internal
+package app
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
+	"github.com/Brialius/jira2trello/internal/trello"
 	"log"
-	"strings"
 )
 
-func Report() {
-	tSrv := NewTrelloServer()
+func Report(tSrv *trello.Client, users []*UserConfig) {
 	err := tSrv.Connect()
 	if err != nil {
 		log.Fatalf("Can't connect to trello: %s", err)
-	}
-
-	if err := viper.UnmarshalKey("users", &users); err != nil {
-		log.Fatalf("Can't get user config: %s", err)
 	}
 
 	for _, user := range users {
@@ -44,25 +38,22 @@ func Report() {
 			"User: %s\n"+
 			"---------------------------------\n", user.Name)
 
-		fmt.Println("Getting Trello cards...")
-		trelloTasks := map[string]*TrelloCard{}
-		cards, _ := tSrv.GetCards()
-		for _, card := range cards {
-			for _, labelId := range *card.IDLabels {
-				if labelId == tSrv.Labels.Jira && strings.Contains(card.IDMembers, user.TrelloId) {
-					trelloTasks[card.Key] = card
-				}
-			}
-		}
+		tCards := getTrelloTasks(tSrv, user)
 
-		fmt.Println("Searching current tasks..")
-		for _, tTask := range trelloTasks {
-			if tTask.ListID == tSrv.Lists.Done[:TrelloIdLength] {
+		fmt.Println("Searching current trello tasks..")
+
+		for _, tTask := range tCards {
+			switch {
+			case tTask.IsInAnyOfLists([]string{tSrv.Lists.Done}):
 				fmt.Println(tTask.Name + " - Done")
 				fmt.Println("https://jira.inbcu.com/browse/" + tTask.Key)
 				fmt.Println("---------------------------------------------")
-			} else if tTask.ListID == tSrv.Lists.Doing[:TrelloIdLength] {
+			case tTask.IsInAnyOfLists([]string{tSrv.Lists.Doing}):
 				fmt.Println(tTask.Name + " - In progress")
+				fmt.Println("https://jira.inbcu.com/browse/" + tTask.Key)
+				fmt.Println("---------------------------------------------")
+			case tTask.IsInAnyOfLists([]string{tSrv.Lists.Review}):
+				fmt.Println(tTask.Name + " - In review")
 				fmt.Println("https://jira.inbcu.com/browse/" + tTask.Key)
 				fmt.Println("---------------------------------------------")
 			}

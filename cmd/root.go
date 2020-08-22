@@ -33,7 +33,7 @@ import (
 
 var cfgFile string
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use: "jira2trello",
 }
@@ -68,10 +68,9 @@ func initConfig() {
 		viper.SetConfigName(".jira2trello")
 
 		// Create empty config file if not exists
-		if err := viper.SafeWriteConfig(); err != nil {
-			if os.IsNotExist(err) {
-				err = viper.WriteConfigAs(filepath.Join(home, ".jira2trello.yaml"))
-			}
+		if err := viper.SafeWriteConfig(); os.IsNotExist(err) {
+			errSave := viper.WriteConfigAs(filepath.Join(home, ".jira2trello.yaml"))
+			log.Fatalf("can't write config file: %s", errSave)
 		}
 	}
 

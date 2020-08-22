@@ -24,7 +24,9 @@ package cmd
 import (
 	"fmt"
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/Brialius/jira2trello/internal"
+	"github.com/Brialius/jira2trello/internal/app"
+	"github.com/Brialius/jira2trello/internal/jira"
+	"github.com/Brialius/jira2trello/internal/trello"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"
@@ -32,17 +34,19 @@ import (
 	"strings"
 )
 
-// configureCmd represents the configure command
+// configureCmd represents the configure command.
 var configureCmd = &cobra.Command{
 	Use:   "configure",
 	Short: "Ask configuration settings and save them to file",
 	Long:  `Ask configuration settings and save them to file`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cfg := internal.MainConfig{}
+		config := app.Config{}
 
-		if err := viper.UnmarshalKey("users", &cfg.Users); err != nil {
+		if err := viper.UnmarshalKey("users", &config.Users); err != nil {
 			log.Printf("Can't get users from config: %s", err)
 		}
+
+		jiraConfig := jira.Config{}
 
 		jiraQs := []*survey.Question{
 			{
@@ -68,13 +72,15 @@ var configureCmd = &cobra.Command{
 				},
 			},
 		}
-		_ = survey.Ask(jiraQs, &cfg.Jira)
+		_ = survey.Ask(jiraQs, &jiraConfig)
 
-		if cfg.Jira.Password == "" {
-			cfg.Jira.Password = viper.GetString("jira.password")
+		if jiraConfig.Password == "" {
+			jiraConfig.Password = viper.GetString("jira.password")
 		}
 
-		viper.Set("jira", cfg.Jira)
+		viper.Set("jira", jiraConfig)
+
+		trelloConfig := trello.Config{}
 
 		trelloQs := []*survey.Question{
 			{
@@ -93,22 +99,22 @@ var configureCmd = &cobra.Command{
 			},
 		}
 
-		_ = survey.Ask(trelloQs, &cfg.Trello)
+		_ = survey.Ask(trelloQs, &trelloConfig)
 
-		if cfg.Trello.Token == "" {
-			cfg.Trello.Token = viper.GetString("trello.token")
+		if trelloConfig.Token == "" {
+			trelloConfig.Token = viper.GetString("trello.token")
 		}
 
-		viper.Set("trello.apiKey", cfg.Trello.ApiKey)
-		viper.Set("trello.token", cfg.Trello.Token)
+		viper.Set("trello.apiKey", trelloConfig.APIKey)
+		viper.Set("trello.token", trelloConfig.Token)
 
-		srv := internal.NewTrelloServer()
-		err := srv.Connect()
+		tSrv := trello.NewServer(trelloConfig)
+		err := tSrv.Connect()
 		if err != nil {
 			log.Fatalf("Can't connect to trello: %s", err)
 		}
 
-		boards, err := srv.GetBoards()
+		boards, err := tSrv.GetBoards()
 		if err != nil {
 			log.Fatalf("Can't get trello boards: %s", err)
 		}
@@ -125,15 +131,15 @@ var configureCmd = &cobra.Command{
 			Options: keys,
 		}, &board)
 
-		cfg.Trello.Board = board[:internal.TrelloIdLength]
-		err = srv.SetBoard(board[:internal.TrelloIdLength])
+		trelloConfig.Board = board[:trello.IDLength]
+		err = tSrv.SetBoard(board[:trello.IDLength])
 		if err != nil {
 			log.Fatalf("Can't set trello board: %s", err)
 		}
 
-		viper.Set("trello.board", &cfg.Trello.Board)
+		viper.Set("trello.board", &trelloConfig.Board)
 
-		lists, err := srv.GetLists()
+		lists, err := tSrv.GetLists()
 		if err != nil {
 			log.Fatalf("Can't get trello lists: %s", err)
 		}
@@ -152,7 +158,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		cfg.Trello.Lists.Todo = choice
+		trelloConfig.Lists.Todo = choice
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select doing list",
@@ -160,7 +166,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		cfg.Trello.Lists.Doing = choice
+		trelloConfig.Lists.Doing = choice
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select done list",
@@ -168,7 +174,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		cfg.Trello.Lists.Done = choice
+		trelloConfig.Lists.Done = choice
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select review list",
@@ -176,7 +182,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		cfg.Trello.Lists.Review = choice
+		trelloConfig.Lists.Review = choice
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select bucket list",
@@ -184,11 +190,11 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		cfg.Trello.Lists.Bucket = choice
+		trelloConfig.Lists.Bucket = choice
 
-		viper.Set("trello.lists", &cfg.Trello.Lists)
+		viper.Set("trello.lists", &trelloConfig.Lists)
 
-		labels, err := srv.GetLabels()
+		labels, err := tSrv.GetLabels()
 		if err != nil {
 			log.Fatalf("Can't get trello labels: %s", err)
 		}
@@ -205,7 +211,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		cfg.Trello.Labels.Jira = choice[:internal.TrelloIdLength]
+		trelloConfig.Labels.Jira = choice[:trello.IDLength]
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select Blocked label",
@@ -213,7 +219,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		cfg.Trello.Labels.Blocked = choice[:internal.TrelloIdLength]
+		trelloConfig.Labels.Blocked = choice[:trello.IDLength]
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select Task label",
@@ -221,7 +227,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		cfg.Trello.Labels.Task = choice[:internal.TrelloIdLength]
+		trelloConfig.Labels.Task = choice[:trello.IDLength]
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select Bug label",
@@ -229,7 +235,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		cfg.Trello.Labels.Bug = choice[:internal.TrelloIdLength]
+		trelloConfig.Labels.Bug = choice[:trello.IDLength]
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select Story label",
@@ -237,16 +243,16 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		cfg.Trello.Labels.Story = choice[:internal.TrelloIdLength]
+		trelloConfig.Labels.Story = choice[:trello.IDLength]
 
-		viper.Set("trello.labels", &cfg.Trello.Labels)
+		viper.Set("trello.labels", &trelloConfig.Labels)
 
-		members, err := srv.GetMembers()
+		members, err := tSrv.GetMembers()
 		if err != nil {
 			log.Fatalf("can't get members for %s board", board)
 		}
 
-		fmt.Printf("\nList of users from %s board:\n", board[internal.TrelloIdLength+2:])
+		fmt.Printf("\nList of users from %s board:\n", board[trello.IDLength+2:])
 		for _, member := range members {
 			fmt.Printf("%s - %s(%s)\n", member.ID, member.FullName, member.Username)
 		}
@@ -264,6 +270,8 @@ func removeKeyFromSlice(slice []string, k string) {
 			copy(slice[i:], slice[i+1:])
 			slice[len(slice)-1] = ""
 			slice = slice[:len(slice)-1]
+			_ = slice // Fix linter staticcheck SA4006: this value of `slice` is never used
+
 			break
 		}
 	}

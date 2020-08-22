@@ -22,23 +22,31 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"github.com/Brialius/jira2trello/internal"
+	"github.com/Brialius/jira2trello/internal/app"
+	"github.com/Brialius/jira2trello/internal/trello"
+	"github.com/spf13/viper"
+	"log"
 
 	"github.com/spf13/cobra"
 )
 
-// syncCmd represents the sync command
+// reportCmd represents the report command.
 var reportCmd = &cobra.Command{
 	Use:   "report",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Report based on trello cards",
+	Long:  "Report based on trello cards",
 	Run: func(cmd *cobra.Command, args []string) {
-		internal.Report()
+		var tCfg trello.Config
+		if err := viper.UnmarshalKey("trello", &tCfg); err != nil {
+			log.Fatalf("Can't parse Trello config: %s", err)
+		}
+
+		var cfg app.Config
+		if err := viper.UnmarshalKey("users", &cfg.Users); err != nil {
+			log.Fatalf("Can't parse users config: %s", err)
+		}
+
+		app.Report(trello.NewServer(tCfg), cfg.Users)
 	},
 }
 

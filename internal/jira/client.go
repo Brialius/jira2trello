@@ -19,28 +19,16 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package internal
+package jira
 
 import (
 	"fmt"
 	"github.com/andygrunwald/go-jira"
-	"github.com/spf13/viper"
 	"log"
 	"time"
 )
 
-type JiraServer struct {
-	JiraConfig
-	cli *jira.Client
-}
-
-type JiraConfig struct {
-	User     string
-	Password string
-	URL      string
-}
-
-type JiraTask struct {
+type Task struct {
 	Created    time.Time
 	Updated    time.Time
 	TimeSpent  time.Duration
@@ -54,17 +42,16 @@ type JiraTask struct {
 	ParentKey  string
 	ParentLink string
 	Type       string
-	cli        *jira.Client
 }
 
-func NewJiraServer() *JiraServer {
-	var cfg JiraConfig
-	if err := viper.UnmarshalKey("jira", &cfg); err != nil {
-		log.Fatalf("Can't parse Jira config: %s", err)
-	}
+type Client struct {
+	Config
+	cli *jira.Client
+}
 
-	return &JiraServer{
-		JiraConfig: JiraConfig{
+func NewServer(cfg Config) *Client {
+	return &Client{
+		Config: Config{
 			User:     cfg.User,
 			Password: cfg.Password,
 			URL:      cfg.URL,
@@ -72,15 +59,17 @@ func NewJiraServer() *JiraServer {
 	}
 }
 
-func (j JiraTask) String() string {
-	return fmt.Sprintf("%s | %s | %s | %s, %s, (%0.1f)", j.Status, j.Type, j.Key, j.Summary, j.Created.Format(time.RFC822), j.TimeSpent.Hours())
+func (j Task) String() string {
+	return fmt.Sprintf("%s | %s | %s | %s, %s, (%0.1f)",
+		j.Status, j.Type, j.Key, j.Summary, j.Created.Format(time.RFC822), j.TimeSpent.Hours())
 }
 
-func (j JiraTask) TabString() string {
-	return fmt.Sprintf("%s \t%s \t%s \t%.70s \t%.9s \t%0.1f", j.Status, j.Type, j.Key, j.Summary, j.Created.Format(time.RFC822), j.TimeSpent.Hours())
+func (j Task) TabString() string {
+	return fmt.Sprintf("%s \t%s \t%s \t%.70s \t%.9s \t%0.1f",
+		j.Status, j.Type, j.Key, j.Summary, j.Created.Format(time.RFC822), j.TimeSpent.Hours())
 }
 
-func (j *JiraServer) Connect() error {
+func (j *Client) Connect() error {
 	tp := jira.BasicAuthTransport{
 		Username: j.User,
 		Password: j.Password,
@@ -92,20 +81,23 @@ func (j *JiraServer) Connect() error {
 	}
 
 	j.cli = client
+
 	return nil
 }
 
-func (j *JiraServer) GetUserTasks(email string) (map[string]*JiraTask, error) {
-	res := map[string]*JiraTask{}
+func (j *Client) GetUserTasks(email string) (map[string]*Task, error) {
+	res := map[string]*Task{}
 	issues, _, err := j.cli.Issue.Search("assignee = '"+email+"' AND status not in "+
 		"(done, closed, close, resolved) ORDER BY priority DESC, updated DESC", nil)
+
 	if err != nil {
 		log.Printf("can't get user %s tasks: %s", email, err)
+
 		return nil, err
 	}
 
 	for _, issue := range issues {
-		res[issue.Key] = &JiraTask{
+		res[issue.Key] = &Task{
 			Created:   time.Time(issue.Fields.Created),
 			Updated:   time.Time(issue.Fields.Updated),
 			TimeSpent: time.Duration(issue.Fields.TimeSpent) * time.Second,
@@ -116,7 +108,6 @@ func (j *JiraServer) GetUserTasks(email string) (map[string]*JiraTask, error) {
 			Status:    issue.Fields.Status.Name,
 			Desc:      issue.Fields.Description,
 			Type:      issue.Fields.Type.Name,
-			cli:       j.cli,
 		}
 		if parent := issue.Fields.Parent; parent != nil {
 			res[issue.Key].ParentID = parent.ID
