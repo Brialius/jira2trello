@@ -40,9 +40,9 @@ var configureCmd = &cobra.Command{
 	Short: "Ask configuration settings and save them to file",
 	Long:  `Ask configuration settings and save them to file`,
 	Run: func(cmd *cobra.Command, args []string) {
-		usersConfig := app.UserConfig{}
+		config := app.Config{}
 
-		if err := viper.UnmarshalKey("users", &usersConfig); err != nil {
+		if err := viper.UnmarshalKey("users", &config.Users); err != nil {
 			log.Printf("Can't get users from config: %s", err)
 		}
 
