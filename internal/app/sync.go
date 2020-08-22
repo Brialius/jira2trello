@@ -19,10 +19,12 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package internal
+package app
 
 import (
 	"fmt"
+	"github.com/Brialius/jira2trello/internal/jira"
+	"github.com/Brialius/jira2trello/internal/trello"
 	"github.com/spf13/viper"
 	"log"
 	"os"
@@ -31,21 +33,15 @@ import (
 	"text/tabwriter"
 )
 
-type UserConfig struct {
-	Name     string
-	Email    string
-	TrelloId string
-}
-
 var users []*UserConfig
 
 func Sync() {
-	jSrv := NewJiraServer()
+	jSrv := jira.NewServer()
 	if err := jSrv.Connect(); err != nil {
 		log.Fatalf("Can't connect to jira server: %s", err)
 	}
 
-	tSrv := NewTrelloServer()
+	tSrv := trello.NewServer()
 	err := tSrv.Connect()
 	if err != nil {
 		log.Fatalf("Can't connect to trello: %s", err)
@@ -75,7 +71,7 @@ func Sync() {
 		_ = w.Flush()
 
 		fmt.Println("Getting Trello cards...")
-		trelloTasks := map[string]*TrelloCard{}
+		trelloTasks := map[string]*trello.Card{}
 		cards, _ := tSrv.GetCards()
 		for _, card := range cards {
 			for _, labelId := range *card.IDLabels {
@@ -108,14 +104,14 @@ func Sync() {
 				labels = append(labels, tSrv.Labels.Task)
 			}
 			if tTask, ok := trelloTasks[key]; !ok {
-				fmt.Printf("Adding %s to %s list..\n", value.Key, list[TrelloIdLength+3:])
+				fmt.Printf("Adding %s to %s list..\n", value.Key, list[trello.IdLength+3:])
 				desc := value.Desc + "\nJira link: " + value.Link + "\nType: " + value.Type
 				if value.ParentKey != "" {
 					desc += "\nParent link: " + value.ParentLink
 				}
-				err = tSrv.CreateCard(&TrelloCard{
+				err = tSrv.CreateCard(&trello.Card{
 					Name:      key + " | " + value.Summary,
-					ListID:    list[:TrelloIdLength],
+					ListID:    list[:trello.IdLength],
 					Desc:      desc,
 					IDLabels:  &labels,
 					IDMembers: user.TrelloId,
@@ -127,20 +123,20 @@ func Sync() {
 				// Update labels
 				if !reflect.DeepEqual(*tTask.IDLabels, labels) {
 					fmt.Printf("Updating labels for %s\n", tTask.Key)
-					err := tTask.updateLabels(strings.Join(labels, ","))
+					err := tTask.UpdateLabels(strings.Join(labels, ","))
 					if err != nil {
 						log.Fatalf("can't update labels oncard `%s`: %s", tTask.Key, err)
 					}
 				}
 				// Update trello card list
-				if tTask.ListID != list[:TrelloIdLength] {
+				if tTask.ListID != list[:trello.IdLength] {
 					if list == tSrv.Lists.Doing || list == tSrv.Lists.Todo {
-						if tTask.ListID == tSrv.Lists.Review[:TrelloIdLength] || tTask.ListID == tSrv.Lists.Bucket[:TrelloIdLength] {
+						if tTask.ListID == tSrv.Lists.Review[:trello.IdLength] || tTask.ListID == tSrv.Lists.Bucket[:trello.IdLength] {
 							continue
 						}
 					}
-					fmt.Printf("Moving %s to %s list\n", value.Key, list[TrelloIdLength+3:])
-					err = tTask.MoveToList(list[:TrelloIdLength])
+					fmt.Printf("Moving %s to %s list\n", value.Key, list[trello.IdLength+3:])
+					err = tTask.MoveToList(list[:trello.IdLength])
 					if err != nil {
 						log.Fatalf("can't move card to list: %s", err)
 					}
@@ -151,8 +147,8 @@ func Sync() {
 		fmt.Println("Searching completed tasks..")
 		for key, tTask := range trelloTasks {
 			if _, ok := jTasks[key]; !ok {
-				if tTask.ListID != tSrv.Lists.Done[:TrelloIdLength] {
-					err = tTask.MoveToList(tSrv.Lists.Done[:TrelloIdLength])
+				if tTask.ListID != tSrv.Lists.Done[:trello.IdLength] {
+					err = tTask.MoveToList(tSrv.Lists.Done[:trello.IdLength])
 					if err != nil {
 						log.Fatalf("can't move card to `Done` list: %s", err)
 					}

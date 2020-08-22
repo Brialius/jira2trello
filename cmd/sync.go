@@ -22,7 +22,7 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"github.com/Brialius/jira2trello/internal"
+	"github.com/Brialius/jira2trello/internal/app"
 
 	"github.com/spf13/cobra"
 )
@@ -33,7 +33,7 @@ var syncCmd = &cobra.Command{
 	Short: "Jira to Trello sync",
 	Long:  `Jira to Trello sync`,
 	Run: func(cmd *cobra.Command, args []string) {
-		internal.Sync()
+		app.Sync()
 	},
 }
 

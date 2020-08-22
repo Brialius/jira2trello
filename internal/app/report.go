@@ -19,17 +19,18 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package internal
+package app
 
 import (
 	"fmt"
+	"github.com/Brialius/jira2trello/internal/trello"
 	"github.com/spf13/viper"
 	"log"
 	"strings"
 )
 
 func Report() {
-	tSrv := NewTrelloServer()
+	tSrv := trello.NewServer()
 	err := tSrv.Connect()
 	if err != nil {
 		log.Fatalf("Can't connect to trello: %s", err)
@@ -45,7 +46,7 @@ func Report() {
 			"---------------------------------\n", user.Name)
 
 		fmt.Println("Getting Trello cards...")
-		trelloTasks := map[string]*TrelloCard{}
+		trelloTasks := map[string]*trello.Card{}
 		cards, _ := tSrv.GetCards()
 		for _, card := range cards {
 			for _, labelId := range *card.IDLabels {
@@ -57,11 +58,11 @@ func Report() {
 
 		fmt.Println("Searching current tasks..")
 		for _, tTask := range trelloTasks {
-			if tTask.ListID == tSrv.Lists.Done[:TrelloIdLength] {
+			if tTask.ListID == tSrv.Lists.Done[:trello.IdLength] {
 				fmt.Println(tTask.Name + " - Done")
 				fmt.Println("https://jira.inbcu.com/browse/" + tTask.Key)
 				fmt.Println("---------------------------------------------")
-			} else if tTask.ListID == tSrv.Lists.Doing[:TrelloIdLength] {
+			} else if tTask.ListID == tSrv.Lists.Doing[:trello.IdLength] {
 				fmt.Println(tTask.Name + " - In progress")
 				fmt.Println("https://jira.inbcu.com/browse/" + tTask.Key)
 				fmt.Println("---------------------------------------------")
