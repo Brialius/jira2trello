@@ -37,8 +37,7 @@ func Sync(jSrv *jira.Client, tSrv *trello.Client, users []*UserConfig) {
 		log.Fatalf("Can't connect to jira server: %s", err)
 	}
 
-	err := tSrv.Connect()
-	if err != nil {
+	if err := tSrv.Connect(); err != nil {
 		log.Fatalf("Can't connect to trello: %s", err)
 	}
 
@@ -54,15 +53,16 @@ func Sync(jSrv *jira.Client, tSrv *trello.Client, users []*UserConfig) {
 
 		printJiraTasks(jTasks)
 
-		tCards := getTrelloTasks(tSrv, user)
-
-		err = syncTasks(jTasks, tSrv, tCards, user)
+		tCards, err := getTrelloCards(tSrv, user)
 		if err != nil {
+			log.Fatalf("can't get trello cards: %s", err)
+		}
+
+		if err := syncTasks(jTasks, tSrv, tCards, user); err != nil {
 			log.Fatalf("can't sync tasks: %s", err)
 		}
 
-		err = syncCompletedTasks(tCards, jTasks, tSrv)
-		if err != nil {
+		if err := syncCompletedTasks(tCards, jTasks, tSrv); err != nil {
 			log.Fatalf("can't sync completed tasks: %s", err)
 		}
 	}
@@ -74,9 +74,7 @@ func syncCompletedTasks(tCards map[string]*trello.Card, jTasks map[string]*jira.
 	for key, tCard := range tCards {
 		if _, ok := jTasks[key]; !ok {
 			if tCard.ListID != tSrv.Lists.Done[:trello.IDLength] {
-				err := tSrv.MoveCardToList(tCard.ID, tSrv.Lists.Done[:trello.IDLength])
-
-				if err != nil {
+				if err := tSrv.MoveCardToList(tCard.ID, tSrv.Lists.Done[:trello.IDLength]); err != nil {
 					return fmt.Errorf("can't move card to `Done` list: %w", err)
 				}
 
@@ -186,11 +184,15 @@ func addCardToList(task *jira.Task, list string, tSrv *trello.Client,
 	})
 }
 
-func getTrelloTasks(tSrv *trello.Client, user *UserConfig) map[string]*trello.Card {
+func getTrelloCards(tSrv *trello.Client, user *UserConfig) (map[string]*trello.Card, error) {
 	fmt.Println("Getting Trello cards...")
 
 	tCards := map[string]*trello.Card{}
-	cards, _ := tSrv.GetCards()
+
+	cards, err := tSrv.GetCards()
+	if err != nil {
+		return nil, err
+	}
 
 	for _, card := range cards {
 		for _, labelID := range *card.IDLabels {
@@ -200,7 +202,7 @@ func getTrelloTasks(tSrv *trello.Client, user *UserConfig) map[string]*trello.Ca
 		}
 	}
 
-	return tCards
+	return tCards, nil
 }
 
 func printJiraTasks(jTasks map[string]*jira.Task) {

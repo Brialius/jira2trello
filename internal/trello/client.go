@@ -112,7 +112,6 @@ func (t *Client) GetLabels() ([]*Label, error) {
 	}
 
 	labels, err := board.GetLabels(trello.Defaults())
-
 	if err != nil {
 		return nil, err
 	}
@@ -141,12 +140,7 @@ func (t *Client) GetBoardByID(id string) (*Board, error) {
 }
 
 func (t *Client) GetMembers() ([]*trello.Member, error) {
-	members, err := t.board.GetMembers(trello.Defaults())
-	if err != nil {
-		return nil, err
-	}
-
-	return members, nil
+	return t.board.GetMembers(trello.Defaults())
 }
 
 func (t *Client) GetCards() ([]*Card, error) {

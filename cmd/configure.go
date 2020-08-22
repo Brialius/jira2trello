@@ -132,8 +132,8 @@ var configureCmd = &cobra.Command{
 		}, &board)
 
 		trelloConfig.Board = board[:trello.IDLength]
-		err = tSrv.SetBoard(board[:trello.IDLength])
-		if err != nil {
+
+		if err := tSrv.SetBoard(board[:trello.IDLength]); err != nil {
 			log.Fatalf("Can't set trello board: %s", err)
 		}
 
