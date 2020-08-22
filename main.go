@@ -22,9 +22,15 @@ THE SOFTWARE.
 package main
 
 import (
+	"fmt"
 	"github.com/Brialius/jira2trello/cmd"
 )
 
+var (
+	version = "dev"
+)
+
 func main() {
+	fmt.Printf("jira2trello %s\n", version)
 	cmd.Execute()
 }
