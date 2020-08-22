@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  check:
+    name: Build check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [ 'darwin', 'linux', 'windows' ]
+        goarch: [ 'amd64' ]
+    steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.15
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: CI
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          make ci
