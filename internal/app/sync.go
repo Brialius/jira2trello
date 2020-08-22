@@ -35,13 +35,11 @@ import (
 
 var users []*UserConfig
 
-func Sync() {
-	jSrv := jira.NewServer()
+func Sync(jSrv *jira.Server, tSrv *trello.Server) {
 	if err := jSrv.Connect(); err != nil {
 		log.Fatalf("Can't connect to jira server: %s", err)
 	}
 
-	tSrv := trello.NewServer()
 	err := tSrv.Connect()
 	if err != nil {
 		log.Fatalf("Can't connect to trello: %s", err)

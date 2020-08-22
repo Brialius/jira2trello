@@ -23,6 +23,10 @@ package cmd
 
 import (
 	"github.com/Brialius/jira2trello/internal/app"
+	"github.com/Brialius/jira2trello/internal/jira"
+	"github.com/Brialius/jira2trello/internal/trello"
+	"github.com/spf13/viper"
+	"log"
 
 	"github.com/spf13/cobra"
 )
@@ -33,7 +37,17 @@ var syncCmd = &cobra.Command{
 	Short: "Jira to Trello sync",
 	Long:  `Jira to Trello sync`,
 	Run: func(cmd *cobra.Command, args []string) {
-		app.Sync()
+		var jCfg jira.Config
+		if err := viper.UnmarshalKey("jira", &jCfg); err != nil {
+			log.Fatalf("Can't parse Jira config: %s", err)
+		}
+
+		var tCfg trello.Config
+		if err := viper.UnmarshalKey("trello", &tCfg); err != nil {
+			log.Fatalf("Can't parse Trello config: %s", err)
+		}
+
+		app.Sync(jira.NewServer(jCfg), trello.NewServer(tCfg))
 	},
 }
 

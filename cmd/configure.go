@@ -108,7 +108,7 @@ var configureCmd = &cobra.Command{
 		viper.Set("trello.apiKey", trelloConfig.ApiKey)
 		viper.Set("trello.token", trelloConfig.Token)
 
-		tSrv := trello.NewServer()
+		tSrv := trello.NewServer(trelloConfig)
 		err := tSrv.Connect()
 		if err != nil {
 			log.Fatalf("Can't connect to trello: %s", err)

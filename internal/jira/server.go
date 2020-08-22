@@ -24,7 +24,6 @@ package jira
 import (
 	"fmt"
 	"github.com/andygrunwald/go-jira"
-	"github.com/spf13/viper"
 	"log"
 	"time"
 )
@@ -50,12 +49,7 @@ type Server struct {
 	cli *jira.Client
 }
 
-func NewServer() *Server {
-	var cfg Config
-	if err := viper.UnmarshalKey("jira", &cfg); err != nil {
-		log.Fatalf("Can't parse Jira config: %s", err)
-	}
-
+func NewServer(cfg Config) *Server {
 	return &Server{
 		Config: Config{
 			User:     cfg.User,

@@ -23,6 +23,9 @@ package cmd
 
 import (
 	"github.com/Brialius/jira2trello/internal/app"
+	"github.com/Brialius/jira2trello/internal/trello"
+	"github.com/spf13/viper"
+	"log"
 
 	"github.com/spf13/cobra"
 )
@@ -38,7 +41,12 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		app.Report()
+		var cfg trello.Config
+		if err := viper.UnmarshalKey("trello", &cfg); err != nil {
+			log.Fatalf("Can't parse Trello config: %s", err)
+		}
+
+		app.Report(trello.NewServer(cfg))
 	},
 }
 

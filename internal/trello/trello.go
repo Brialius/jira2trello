@@ -24,8 +24,6 @@ package trello
 import (
 	"fmt"
 	"github.com/adlio/trello"
-	"github.com/spf13/viper"
-	"log"
 	"strings"
 )
 
@@ -92,12 +90,7 @@ func (c *Card) String() string {
 	return fmt.Sprintf("%s | %s(%s): %s - %s", c.Key, c.List, c.ListID, c.Name, *c.IDLabels)
 }
 
-func NewServer() *Server {
-	var cfg Config
-	if err := viper.UnmarshalKey("trello", &cfg); err != nil {
-		log.Fatalf("Can't parse Trello config: %s", err)
-	}
-
+func NewServer(cfg Config) *Server {
 	return &Server{
 		Config: Config{
 			ApiKey: cfg.ApiKey,

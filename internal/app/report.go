@@ -29,8 +29,7 @@ import (
 	"strings"
 )
 
-func Report() {
-	tSrv := trello.NewServer()
+func Report(tSrv *trello.Server) {
 	err := tSrv.Connect()
 	if err != nil {
 		log.Fatalf("Can't connect to trello: %s", err)
