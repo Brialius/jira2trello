@@ -42,15 +42,16 @@ func Report(tSrv *trello.Client, users []*UserConfig) {
 
 		fmt.Println("Searching current trello tasks..")
 		for _, tTask := range tCards {
-			if tTask.IsInAnyOfLists([]string{tSrv.Lists.Done}) {
+			switch {
+			case tTask.IsInAnyOfLists([]string{tSrv.Lists.Done}):
 				fmt.Println(tTask.Name + " - Done")
 				fmt.Println("https://jira.inbcu.com/browse/" + tTask.Key)
 				fmt.Println("---------------------------------------------")
-			} else if tTask.IsInAnyOfLists([]string{tSrv.Lists.Doing}) {
+			case tTask.IsInAnyOfLists([]string{tSrv.Lists.Doing}):
 				fmt.Println(tTask.Name + " - In progress")
 				fmt.Println("https://jira.inbcu.com/browse/" + tTask.Key)
 				fmt.Println("---------------------------------------------")
-			} else if tTask.IsInAnyOfLists([]string{tSrv.Lists.Review}) {
+			case tTask.IsInAnyOfLists([]string{tSrv.Lists.Review}):
 				fmt.Println(tTask.Name + " - In review")
 				fmt.Println("https://jira.inbcu.com/browse/" + tTask.Key)
 				fmt.Println("---------------------------------------------")
