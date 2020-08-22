@@ -28,8 +28,7 @@ import (
 )
 
 func Report(tSrv *trello.Client, users []*UserConfig) {
-	err := tSrv.Connect()
-	if err != nil {
+	if err := tSrv.Connect(); err != nil {
 		log.Fatalf("Can't connect to trello: %s", err)
 	}
 
@@ -38,7 +37,10 @@ func Report(tSrv *trello.Client, users []*UserConfig) {
 			"User: %s\n"+
 			"---------------------------------\n", user.Name)
 
-		tCards := getTrelloTasks(tSrv, user)
+		tCards, err := getTrelloCards(tSrv, user)
+		if err != nil {
+			log.Fatalf("can't get trello cards: %s", err)
+		}
 
 		fmt.Println("Searching current trello tasks..")
 

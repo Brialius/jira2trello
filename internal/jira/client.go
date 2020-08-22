@@ -24,7 +24,6 @@ package jira
 import (
 	"fmt"
 	"github.com/andygrunwald/go-jira"
-	"log"
 	"time"
 )
 
@@ -91,8 +90,6 @@ func (j *Client) GetUserTasks(email string) (map[string]*Task, error) {
 		"(done, closed, close, resolved) ORDER BY priority DESC, updated DESC", nil)
 
 	if err != nil {
-		log.Printf("can't get user %s tasks: %s", email, err)
-
 		return nil, err
 	}
 
