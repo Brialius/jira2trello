@@ -38,6 +38,7 @@ func NewServer(cfg Config) *Client {
 			APIKey: cfg.APIKey,
 			Token:  cfg.Token,
 			Board:  cfg.Board,
+			UserID: cfg.UserID,
 			Lists: Lists{
 				Todo:   cfg.Lists.Todo,
 				Doing:  cfg.Lists.Doing,
@@ -204,4 +205,13 @@ func (t *Client) SetBoard(id string) error {
 	t.board = board
 
 	return nil
+}
+
+func (t *Client) GetSelfMemberID() (string, error) {
+	member, err := t.cli.GetMember("me", trello.Defaults())
+	if err != nil {
+		return "", err
+	}
+
+	return member.ID, nil
 }

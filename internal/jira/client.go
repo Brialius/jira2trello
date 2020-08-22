@@ -84,9 +84,9 @@ func (j *Client) Connect() error {
 	return nil
 }
 
-func (j *Client) GetUserTasks(email string) (map[string]*Task, error) {
+func (j *Client) GetUserTasks() (map[string]*Task, error) {
 	res := map[string]*Task{}
-	issues, _, err := j.cli.Issue.Search("assignee = '"+email+"' AND status not in "+
+	issues, _, err := j.cli.Issue.Search("assignee = '"+j.User+"' AND status not in "+
 		"(done, closed, close, resolved) ORDER BY priority DESC, updated DESC", nil)
 
 	if err != nil {

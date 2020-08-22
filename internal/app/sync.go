@@ -32,7 +32,7 @@ import (
 	"text/tabwriter"
 )
 
-func Sync(jSrv *jira.Client, tSrv *trello.Client, users []*UserConfig) {
+func Sync(jSrv *jira.Client, tSrv *trello.Client) {
 	if err := jSrv.Connect(); err != nil {
 		log.Fatalf("Can't connect to jira server: %s", err)
 	}
@@ -41,30 +41,24 @@ func Sync(jSrv *jira.Client, tSrv *trello.Client, users []*UserConfig) {
 		log.Fatalf("Can't connect to trello: %s", err)
 	}
 
-	for _, user := range users {
-		fmt.Printf("---------------------------------\n"+
-			"User: %s\n"+
-			"---------------------------------\n", user.Name)
+	jTasks, err := getJiraTasks(jSrv)
+	if err != nil {
+		log.Fatalf("can't get jira tasks: %s", err)
+	}
 
-		jTasks, err := getJiraTasks(jSrv, user)
-		if err != nil {
-			log.Fatalf("can't get jira tasks: %s", err)
-		}
+	printJiraTasks(jTasks)
 
-		printJiraTasks(jTasks)
+	tCards, err := getTrelloCards(tSrv)
+	if err != nil {
+		log.Fatalf("can't get trello cards: %s", err)
+	}
 
-		tCards, err := getTrelloCards(tSrv, user)
-		if err != nil {
-			log.Fatalf("can't get trello cards: %s", err)
-		}
+	if err := syncTasks(jTasks, tSrv, tCards); err != nil {
+		log.Fatalf("can't sync tasks: %s", err)
+	}
 
-		if err := syncTasks(jTasks, tSrv, tCards, user); err != nil {
-			log.Fatalf("can't sync tasks: %s", err)
-		}
-
-		if err := syncCompletedTasks(tCards, jTasks, tSrv); err != nil {
-			log.Fatalf("can't sync completed tasks: %s", err)
-		}
+	if err := syncCompletedTasks(tCards, jTasks, tSrv); err != nil {
+		log.Fatalf("can't sync completed tasks: %s", err)
 	}
 }
 
@@ -86,8 +80,7 @@ func syncCompletedTasks(tCards map[string]*trello.Card, jTasks map[string]*jira.
 	return nil
 }
 
-func syncTasks(jTasks map[string]*jira.Task, tSrv *trello.Client,
-	tCards map[string]*trello.Card, user *UserConfig) error {
+func syncTasks(jTasks map[string]*jira.Task, tSrv *trello.Client, tCards map[string]*trello.Card) error {
 	fmt.Println("Sync tasks...")
 
 	for key, value := range jTasks {
@@ -115,7 +108,7 @@ func syncTasks(jTasks map[string]*jira.Task, tSrv *trello.Client,
 		}
 
 		if tCard, ok := tCards[key]; !ok {
-			if err := addCardToList(value, list, tSrv, key, labels, user); err != nil {
+			if err := addCardToList(value, list, tSrv, key, labels); err != nil {
 				return fmt.Errorf("can't add task to list: %w", err)
 			}
 		} else {
@@ -166,8 +159,7 @@ func updateCardLabels(tCard *trello.Card, labels []string, tSrv *trello.Client) 
 	return nil
 }
 
-func addCardToList(task *jira.Task, list string, tSrv *trello.Client,
-	key string, labels []string, user *UserConfig) error {
+func addCardToList(task *jira.Task, list string, tSrv *trello.Client, key string, labels []string) error {
 	fmt.Printf("Adding %s to %s list..\n", task.Key, list[trello.IDLength+3:])
 	desc := task.Desc + "\nJira link: " + task.Link + "\nType: " + task.Type
 
@@ -180,11 +172,11 @@ func addCardToList(task *jira.Task, list string, tSrv *trello.Client,
 		ListID:    list,
 		Desc:      desc,
 		IDLabels:  &labels,
-		IDMembers: user.TrelloID,
+		IDMembers: tSrv.UserID,
 	})
 }
 
-func getTrelloCards(tSrv *trello.Client, user *UserConfig) (map[string]*trello.Card, error) {
+func getTrelloCards(tSrv *trello.Client) (map[string]*trello.Card, error) {
 	fmt.Println("Getting Trello cards...")
 
 	tCards := map[string]*trello.Card{}
@@ -196,7 +188,7 @@ func getTrelloCards(tSrv *trello.Client, user *UserConfig) (map[string]*trello.C
 
 	for _, card := range cards {
 		for _, labelID := range *card.IDLabels {
-			if labelID == tSrv.Labels.Jira && strings.Contains(card.IDMembers, user.TrelloID) {
+			if labelID == tSrv.Labels.Jira && strings.Contains(card.IDMembers, tSrv.UserID) {
 				tCards[card.Key] = card
 			}
 		}
@@ -216,13 +208,13 @@ func printJiraTasks(jTasks map[string]*jira.Task) {
 	_ = w.Flush()
 }
 
-func getJiraTasks(jSrv *jira.Client, user *UserConfig) (map[string]*jira.Task, error) {
+func getJiraTasks(jSrv *jira.Client) (map[string]*jira.Task, error) {
 	fmt.Println("Getting Jira tasks...")
 
-	jTasks, err := jSrv.GetUserTasks(user.Email)
+	jTasks, err := jSrv.GetUserTasks()
 
 	if err != nil {
-		log.Fatalf("can't get tasks for %s from jira server: %s", user.Email, err)
+		log.Fatalf("can't get tasks from jira server: %s", err)
 	}
 
 	return jTasks, err

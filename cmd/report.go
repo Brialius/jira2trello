@@ -41,12 +41,7 @@ var reportCmd = &cobra.Command{
 			log.Fatalf("Can't parse Trello config: %s", err)
 		}
 
-		var cfg app.Config
-		if err := viper.UnmarshalKey("users", &cfg.Users); err != nil {
-			log.Fatalf("Can't parse users config: %s", err)
-		}
-
-		app.Report(trello.NewServer(tCfg), cfg.Users)
+		app.Report(trello.NewServer(tCfg))
 	},
 }
 
