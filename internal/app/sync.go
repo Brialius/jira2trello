@@ -69,12 +69,12 @@ func Sync(jSrv *jira.Client, tSrv *trello.Client) {
 		_ = w.Flush()
 
 		fmt.Println("Getting Trello cards...")
-		trelloCards := map[string]*trello.Card{}
+		tCards := map[string]*trello.Card{}
 		cards, _ := tSrv.GetCards()
 		for _, card := range cards {
 			for _, labelId := range *card.IDLabels {
 				if labelId == tSrv.Labels.Jira && strings.Contains(card.IDMembers, user.TrelloId) {
-					trelloCards[card.Key] = card
+					tCards[card.Key] = card
 				}
 			}
 		}
@@ -101,7 +101,7 @@ func Sync(jSrv *jira.Client, tSrv *trello.Client) {
 			default:
 				labels = append(labels, tSrv.Labels.Task)
 			}
-			if tCard, ok := trelloCards[key]; !ok {
+			if tCard, ok := tCards[key]; !ok {
 				fmt.Printf("Adding %s to %s list..\n", value.Key, list[trello.IdLength+3:])
 				desc := value.Desc + "\nJira link: " + value.Link + "\nType: " + value.Type
 				if value.ParentKey != "" {
@@ -143,7 +143,7 @@ func Sync(jSrv *jira.Client, tSrv *trello.Client) {
 		}
 
 		fmt.Println("Searching completed tasks..")
-		for key, tCard := range trelloCards {
+		for key, tCard := range tCards {
 			if _, ok := jTasks[key]; !ok {
 				if tCard.ListID != tSrv.Lists.Done[:trello.IdLength] {
 					err = tSrv.MoveCardToList(tCard.ID, tSrv.Lists.Done[:trello.IdLength])
