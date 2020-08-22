@@ -60,11 +60,13 @@ func NewServer(cfg Config) *Client {
 }
 
 func (j Task) String() string {
-	return fmt.Sprintf("%s | %s | %s | %s, %s, (%0.1f)", j.Status, j.Type, j.Key, j.Summary, j.Created.Format(time.RFC822), j.TimeSpent.Hours())
+	return fmt.Sprintf("%s | %s | %s | %s, %s, (%0.1f)",
+		j.Status, j.Type, j.Key, j.Summary, j.Created.Format(time.RFC822), j.TimeSpent.Hours())
 }
 
 func (j Task) TabString() string {
-	return fmt.Sprintf("%s \t%s \t%s \t%.70s \t%.9s \t%0.1f", j.Status, j.Type, j.Key, j.Summary, j.Created.Format(time.RFC822), j.TimeSpent.Hours())
+	return fmt.Sprintf("%s \t%s \t%s \t%.70s \t%.9s \t%0.1f",
+		j.Status, j.Type, j.Key, j.Summary, j.Created.Format(time.RFC822), j.TimeSpent.Hours())
 }
 
 func (j *Client) Connect() error {
@@ -79,6 +81,7 @@ func (j *Client) Connect() error {
 	}
 
 	j.cli = client
+
 	return nil
 }
 
@@ -86,8 +89,10 @@ func (j *Client) GetUserTasks(email string) (map[string]*Task, error) {
 	res := map[string]*Task{}
 	issues, _, err := j.cli.Issue.Search("assignee = '"+email+"' AND status not in "+
 		"(done, closed, close, resolved) ORDER BY priority DESC, updated DESC", nil)
+
 	if err != nil {
 		log.Printf("can't get user %s tasks: %s", email, err)
+
 		return nil, err
 	}
 

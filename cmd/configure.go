@@ -34,7 +34,7 @@ import (
 	"strings"
 )
 
-// configureCmd represents the configure command
+// configureCmd represents the configure command.
 var configureCmd = &cobra.Command{
 	Use:   "configure",
 	Short: "Ask configuration settings and save them to file",
@@ -105,7 +105,7 @@ var configureCmd = &cobra.Command{
 			trelloConfig.Token = viper.GetString("trello.token")
 		}
 
-		viper.Set("trello.apiKey", trelloConfig.ApiKey)
+		viper.Set("trello.apiKey", trelloConfig.APIKey)
 		viper.Set("trello.token", trelloConfig.Token)
 
 		tSrv := trello.NewServer(trelloConfig)
@@ -131,8 +131,8 @@ var configureCmd = &cobra.Command{
 			Options: keys,
 		}, &board)
 
-		trelloConfig.Board = board[:trello.IdLength]
-		err = tSrv.SetBoard(board[:trello.IdLength])
+		trelloConfig.Board = board[:trello.IDLength]
+		err = tSrv.SetBoard(board[:trello.IDLength])
 		if err != nil {
 			log.Fatalf("Can't set trello board: %s", err)
 		}
@@ -211,7 +211,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		trelloConfig.Labels.Jira = choice[:trello.IdLength]
+		trelloConfig.Labels.Jira = choice[:trello.IDLength]
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select Blocked label",
@@ -219,7 +219,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		trelloConfig.Labels.Blocked = choice[:trello.IdLength]
+		trelloConfig.Labels.Blocked = choice[:trello.IDLength]
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select Task label",
@@ -227,7 +227,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		trelloConfig.Labels.Task = choice[:trello.IdLength]
+		trelloConfig.Labels.Task = choice[:trello.IDLength]
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select Bug label",
@@ -235,7 +235,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		trelloConfig.Labels.Bug = choice[:trello.IdLength]
+		trelloConfig.Labels.Bug = choice[:trello.IDLength]
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select Story label",
@@ -243,7 +243,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		trelloConfig.Labels.Story = choice[:trello.IdLength]
+		trelloConfig.Labels.Story = choice[:trello.IDLength]
 
 		viper.Set("trello.labels", &trelloConfig.Labels)
 
@@ -252,7 +252,7 @@ var configureCmd = &cobra.Command{
 			log.Fatalf("can't get members for %s board", board)
 		}
 
-		fmt.Printf("\nList of users from %s board:\n", board[trello.IdLength+2:])
+		fmt.Printf("\nList of users from %s board:\n", board[trello.IDLength+2:])
 		for _, member := range members {
 			fmt.Printf("%s - %s(%s)\n", member.ID, member.FullName, member.Username)
 		}
@@ -270,6 +270,8 @@ func removeKeyFromSlice(slice []string, k string) {
 			copy(slice[i:], slice[i+1:])
 			slice[len(slice)-1] = ""
 			slice = slice[:len(slice)-1]
+			_ = slice // Fix linter staticcheck SA4006: this value of `slice` is never used
+
 			break
 		}
 	}

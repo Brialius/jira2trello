@@ -1,7 +1,7 @@
 package trello
 
 type Config struct {
-	ApiKey string
+	APIKey string
 	Token  string
 	Board  string
 	Lists  Lists

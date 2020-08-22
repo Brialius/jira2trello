@@ -2,7 +2,7 @@ package trello
 
 import "fmt"
 
-const IdLength = 24
+const IDLength = 24
 
 type Lists struct {
 	Todo   string
@@ -59,10 +59,11 @@ func (c *Card) String() string {
 }
 
 func (c *Card) IsInAnyOfLists(lists []string) bool {
-	for _, listId := range lists {
-		if c.ListID == listId[:IdLength] {
+	for _, listID := range lists {
+		if c.ListID == listID[:IDLength] {
 			return true
 		}
 	}
+
 	return false
 }

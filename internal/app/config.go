@@ -24,7 +24,7 @@ package app
 type UserConfig struct {
 	Name     string
 	Email    string
-	TrelloId string
+	TrelloID string
 }
 
 type Config struct {

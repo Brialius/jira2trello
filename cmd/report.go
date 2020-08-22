@@ -30,7 +30,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// syncCmd represents the sync command
+// reportCmd represents the report command.
 var reportCmd = &cobra.Command{
 	Use:   "report",
 	Short: "Report based on trello cards",

@@ -41,6 +41,7 @@ func Report(tSrv *trello.Client, users []*UserConfig) {
 		tCards := getTrelloTasks(tSrv, user)
 
 		fmt.Println("Searching current trello tasks..")
+
 		for _, tTask := range tCards {
 			switch {
 			case tTask.IsInAnyOfLists([]string{tSrv.Lists.Done}):
