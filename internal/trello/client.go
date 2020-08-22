@@ -22,76 +22,18 @@ THE SOFTWARE.
 package trello
 
 import (
-	"fmt"
 	"github.com/adlio/trello"
 	"strings"
 )
 
-const IdLength = 24
-
-type Server struct {
+type Client struct {
 	Config
 	cli   *trello.Client
 	board *trello.Board
 }
 
-type Lists struct {
-	Todo   string
-	Doing  string
-	Done   string
-	Review string
-	Bucket string
-}
-
-type Labels struct {
-	Jira    string
-	Blocked string
-	Task    string
-	Bug     string
-	Story   string
-}
-
-type Card struct {
-	ID        string
-	Name      string
-	ListID    string
-	List      string
-	Labels    string
-	Key       string
-	Desc      string
-	IDLabels  *[]string
-	IDMembers string
-	cli       *trello.Client
-}
-
-type Board struct {
-	URL  string
-	Name string
-	ID   string
-}
-
-type Label struct {
-	Name string
-	ID   string
-}
-
-type List struct {
-	Name string
-	ID   string
-}
-
-type Member struct {
-	Name     string
-	FullName string
-	ID       string
-}
-
-func (c *Card) String() string {
-	return fmt.Sprintf("%s | %s(%s): %s - %s", c.Key, c.List, c.ListID, c.Name, *c.IDLabels)
-}
-
-func NewServer(cfg Config) *Server {
-	return &Server{
+func NewServer(cfg Config) *Client {
+	return &Client{
 		Config: Config{
 			ApiKey: cfg.ApiKey,
 			Token:  cfg.Token,
@@ -114,7 +56,7 @@ func NewServer(cfg Config) *Server {
 	}
 }
 
-func (t *Server) Connect() error {
+func (t *Client) Connect() error {
 	t.cli = trello.NewClient(t.ApiKey, t.Token)
 	if len(t.Board) > 0 {
 		if err := t.SetBoard(t.Board); err != nil {
@@ -124,7 +66,7 @@ func (t *Server) Connect() error {
 	return nil
 }
 
-func (t *Server) GetBoards() (map[string]*Board, error) {
+func (t *Client) GetBoards() (map[string]*Board, error) {
 	res := map[string]*Board{}
 	boards, err := t.cli.GetMyBoards(trello.Defaults())
 	if err != nil {
@@ -141,7 +83,7 @@ func (t *Server) GetBoards() (map[string]*Board, error) {
 	return res, nil
 }
 
-func (t *Server) GetLists() ([]*List, error) {
+func (t *Client) GetLists() ([]*List, error) {
 	lists, err := t.board.GetLists(trello.Defaults())
 	if err != nil {
 		return nil, err
@@ -157,7 +99,7 @@ func (t *Server) GetLists() ([]*List, error) {
 	return res, nil
 }
 
-func (t *Server) GetLabels() ([]*Label, error) {
+func (t *Client) GetLabels() ([]*Label, error) {
 	res := make([]*Label, 0)
 	board, err := t.cli.GetBoard(t.Board, trello.Defaults())
 	if err != nil {
@@ -177,7 +119,7 @@ func (t *Server) GetLabels() ([]*Label, error) {
 	return res, nil
 }
 
-func (t *Server) GetBoardById(id string) (*Board, error) {
+func (t *Client) GetBoardById(id string) (*Board, error) {
 	board, err := t.cli.GetBoard(id, trello.Defaults())
 	if err != nil {
 		return nil, err
@@ -189,7 +131,7 @@ func (t *Server) GetBoardById(id string) (*Board, error) {
 	}, err
 }
 
-func (t *Server) GetMembers() ([]*trello.Member, error) {
+func (t *Client) GetMembers() ([]*trello.Member, error) {
 	members, err := t.board.GetMembers(trello.Defaults())
 	if err != nil {
 		return nil, err
@@ -197,7 +139,7 @@ func (t *Server) GetMembers() ([]*trello.Member, error) {
 	return members, nil
 }
 
-func (t *Server) GetCards() ([]*Card, error) {
+func (t *Client) GetCards() ([]*Card, error) {
 	cards, err := t.board.GetCards(trello.Defaults())
 	if err != nil {
 		return nil, err
@@ -213,13 +155,12 @@ func (t *Server) GetCards() ([]*Card, error) {
 			Desc:      card.Desc,
 			IDLabels:  &card.IDLabels,
 			IDMembers: strings.Join(card.IDMembers, ","),
-			cli:       t.cli,
 		})
 	}
 	return res, nil
 }
 
-func (t *Server) CreateCard(card *Card) error {
+func (t *Client) CreateCard(card *Card) error {
 	return t.cli.CreateCard(&trello.Card{
 		Name:      card.Name,
 		IDLabels:  *card.IDLabels,
@@ -229,27 +170,23 @@ func (t *Server) CreateCard(card *Card) error {
 	}, trello.Defaults())
 }
 
-func (c *Card) MoveToList(listId string) error {
-	card, err := c.cli.GetCard(c.ID, trello.Defaults())
+func (t *Client) MoveCardToList(cardId, listId string) error {
+	card, err := t.cli.GetCard(cardId, trello.Defaults())
 	if err != nil {
 		return err
 	}
 	return card.MoveToList(listId, trello.Defaults())
 }
 
-func (c *Card) UpdateLabels(labels string) error {
-	return c.updateArgs(trello.Arguments{"idLabels": labels})
-}
-
-func (c *Card) updateArgs(args trello.Arguments) error {
-	card, err := c.cli.GetCard(c.ID, trello.Defaults())
+func (t *Client) UpdateCardLabels(cardId, labels string) error {
+	card, err := t.cli.GetCard(cardId, trello.Defaults())
 	if err != nil {
 		return err
 	}
-	return card.Update(args)
+	return card.Update(trello.Arguments{"idLabels": labels})
 }
 
-func (t *Server) SetBoard(id string) error {
+func (t *Client) SetBoard(id string) error {
 	t.Board = id
 	board, err := t.cli.GetBoard(id, trello.Defaults())
 	if err != nil {

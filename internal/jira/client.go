@@ -44,13 +44,13 @@ type Task struct {
 	Type       string
 }
 
-type Server struct {
+type Client struct {
 	Config
 	cli *jira.Client
 }
 
-func NewServer(cfg Config) *Server {
-	return &Server{
+func NewServer(cfg Config) *Client {
+	return &Client{
 		Config: Config{
 			User:     cfg.User,
 			Password: cfg.Password,
@@ -67,7 +67,7 @@ func (j Task) TabString() string {
 	return fmt.Sprintf("%s \t%s \t%s \t%.70s \t%.9s \t%0.1f", j.Status, j.Type, j.Key, j.Summary, j.Created.Format(time.RFC822), j.TimeSpent.Hours())
 }
 
-func (j *Server) Connect() error {
+func (j *Client) Connect() error {
 	tp := jira.BasicAuthTransport{
 		Username: j.User,
 		Password: j.Password,
@@ -82,7 +82,7 @@ func (j *Server) Connect() error {
 	return nil
 }
 
-func (j *Server) GetUserTasks(email string) (map[string]*Task, error) {
+func (j *Client) GetUserTasks(email string) (map[string]*Task, error) {
 	res := map[string]*Task{}
 	issues, _, err := j.cli.Issue.Search("assignee = '"+email+"' AND status not in "+
 		"(done, closed, close, resolved) ORDER BY priority DESC, updated DESC", nil)
