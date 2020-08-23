@@ -22,50 +22,19 @@ THE SOFTWARE.
 package jira
 
 import (
-	"fmt"
 	"github.com/andygrunwald/go-jira"
 	"time"
 )
-
-type Task struct {
-	Created    time.Time
-	Updated    time.Time
-	TimeSpent  time.Duration
-	Summary    string
-	Link       string
-	Self       string
-	Key        string
-	Status     string
-	Desc       string
-	ParentID   string
-	ParentKey  string
-	ParentLink string
-	Type       string
-}
 
 type Client struct {
 	Config
 	cli *jira.Client
 }
 
-func NewServer(cfg Config) *Client {
+func NewServer(cfg *Config) *Client {
 	return &Client{
-		Config: Config{
-			User:     cfg.User,
-			Password: cfg.Password,
-			URL:      cfg.URL,
-		},
+		Config: *cfg,
 	}
-}
-
-func (j Task) String() string {
-	return fmt.Sprintf("%s | %s | %s | %s, %s, (%0.1f)",
-		j.Status, j.Type, j.Key, j.Summary, j.Created.Format(time.RFC822), j.TimeSpent.Hours())
-}
-
-func (j Task) TabString() string {
-	return fmt.Sprintf("%s \t%s \t%s \t%.70s \t%.9s \t%0.1f",
-		j.Status, j.Type, j.Key, j.Summary, j.Created.Format(time.RFC822), j.TimeSpent.Hours())
 }
 
 func (j *Client) Connect() error {

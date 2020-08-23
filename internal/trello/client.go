@@ -32,28 +32,9 @@ type Client struct {
 	board *trello.Board
 }
 
-func NewServer(cfg Config) *Client {
+func NewClient(cfg *Config) *Client {
 	return &Client{
-		Config: Config{
-			APIKey: cfg.APIKey,
-			Token:  cfg.Token,
-			Board:  cfg.Board,
-			UserID: cfg.UserID,
-			Lists: Lists{
-				Todo:   cfg.Lists.Todo,
-				Doing:  cfg.Lists.Doing,
-				Done:   cfg.Lists.Done,
-				Review: cfg.Lists.Review,
-				Bucket: cfg.Lists.Bucket,
-			},
-			Labels: Labels{
-				Jira:    cfg.Labels.Jira,
-				Blocked: cfg.Labels.Blocked,
-				Bug:     cfg.Labels.Bug,
-				Task:    cfg.Labels.Task,
-				Story:   cfg.Labels.Story,
-			},
-		},
+		Config: *cfg,
 	}
 }
 
@@ -214,4 +195,8 @@ func (t *Client) GetSelfMemberID() (string, error) {
 	}
 
 	return member.ID, nil
+}
+
+func (t *Client) GetConfig() *Config {
+	return &t.Config
 }

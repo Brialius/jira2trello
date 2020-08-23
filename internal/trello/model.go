@@ -3,6 +3,21 @@ package trello
 import "fmt"
 
 const IDLength = 24
+const (
+	ListIDTodo = iota
+	ListIDDoing
+	ListIDDone
+	ListIDReview
+	ListIDBucket
+)
+
+const (
+	LabelIDJira = iota
+	LabelIDBlocked
+	LabelIDTask
+	LabelIDBug
+	LabelIDStory
+)
 
 type Lists struct {
 	Todo   string

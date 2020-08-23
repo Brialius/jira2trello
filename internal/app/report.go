@@ -27,12 +27,12 @@ import (
 	"log"
 )
 
-func Report(tSrv *trello.Client) {
-	if err := tSrv.Connect(); err != nil {
+func Report(tCli trello.Connector) {
+	if err := tCli.Connect(); err != nil {
 		log.Fatalf("Can't connect to trello: %s", err)
 	}
 
-	tCards, err := getTrelloCards(tSrv)
+	tCards, err := getTrelloCards(tCli)
 	if err != nil {
 		log.Fatalf("can't get trello cards: %s", err)
 	}
@@ -41,15 +41,15 @@ func Report(tSrv *trello.Client) {
 
 	for _, tTask := range tCards {
 		switch {
-		case tTask.IsInAnyOfLists([]string{tSrv.Lists.Done}):
+		case tTask.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Done}):
 			fmt.Println(tTask.Name + " - Done")
 			fmt.Println("https://jira.inbcu.com/browse/" + tTask.Key)
 			fmt.Println("---------------------------------------------")
-		case tTask.IsInAnyOfLists([]string{tSrv.Lists.Doing}):
+		case tTask.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Doing}):
 			fmt.Println(tTask.Name + " - In progress")
 			fmt.Println("https://jira.inbcu.com/browse/" + tTask.Key)
 			fmt.Println("---------------------------------------------")
-		case tTask.IsInAnyOfLists([]string{tSrv.Lists.Review}):
+		case tTask.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Review}):
 			fmt.Println(tTask.Name + " - In review")
 			fmt.Println("https://jira.inbcu.com/browse/" + tTask.Key)
 			fmt.Println("---------------------------------------------")
