@@ -41,7 +41,9 @@ var reportCmd = &cobra.Command{
 			log.Fatalf("Can't parse Trello config: %s", err)
 		}
 
-		app.Report(trello.NewServer(tCfg))
+		tCfg.Debug = Debug
+
+		app.Report(trello.NewClient(&tCfg))
 	},
 }
 

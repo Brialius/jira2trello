@@ -73,7 +73,8 @@ var configureCmd = &cobra.Command{
 
 		viper.Set("jira", jiraConfig)
 
-		trelloConfig := trello.Config{}
+		tCfg := trello.Config{}
+		tCfg.Debug = Debug
 
 		trelloQs := []*survey.Question{
 			{
@@ -92,16 +93,16 @@ var configureCmd = &cobra.Command{
 			},
 		}
 
-		_ = survey.Ask(trelloQs, &trelloConfig)
+		_ = survey.Ask(trelloQs, &tCfg)
 
-		if trelloConfig.Token == "" {
-			trelloConfig.Token = viper.GetString("trello.token")
+		if tCfg.Token == "" {
+			tCfg.Token = viper.GetString("trello.token")
 		}
 
-		viper.Set("trello.apiKey", trelloConfig.APIKey)
-		viper.Set("trello.token", trelloConfig.Token)
+		viper.Set("trello.apiKey", tCfg.APIKey)
+		viper.Set("trello.token", tCfg.Token)
 
-		tSrv := trello.NewServer(trelloConfig)
+		tSrv := trello.NewClient(&tCfg)
 
 		if err := tSrv.Connect(); err != nil {
 			log.Fatalf("Can't connect to trello: %s", err)
@@ -112,9 +113,9 @@ var configureCmd = &cobra.Command{
 			log.Fatalf("can't get self id: %s", err)
 		}
 
-		trelloConfig.UserID = userID
+		tCfg.UserID = userID
 
-		viper.Set("trello.userid", trelloConfig.UserID)
+		viper.Set("trello.userid", tCfg.UserID)
 
 		boards, err := tSrv.GetBoards()
 		if err != nil {
@@ -133,13 +134,13 @@ var configureCmd = &cobra.Command{
 			Options: keys,
 		}, &board)
 
-		trelloConfig.Board = board[:trello.IDLength]
+		tCfg.Board = board[:trello.IDLength]
 
 		if err := tSrv.SetBoard(board[:trello.IDLength]); err != nil {
 			log.Fatalf("Can't set trello board: %s", err)
 		}
 
-		viper.Set("trello.board", &trelloConfig.Board)
+		viper.Set("trello.board", &tCfg.Board)
 
 		lists, err := tSrv.GetLists()
 		if err != nil {
@@ -160,7 +161,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		trelloConfig.Lists.Todo = choice
+		tCfg.Lists.Todo = choice
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select doing list",
@@ -168,7 +169,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		trelloConfig.Lists.Doing = choice
+		tCfg.Lists.Doing = choice
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select done list",
@@ -176,7 +177,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		trelloConfig.Lists.Done = choice
+		tCfg.Lists.Done = choice
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select review list",
@@ -184,7 +185,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		trelloConfig.Lists.Review = choice
+		tCfg.Lists.Review = choice
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select bucket list",
@@ -192,9 +193,9 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		trelloConfig.Lists.Bucket = choice
+		tCfg.Lists.Bucket = choice
 
-		viper.Set("trello.lists", &trelloConfig.Lists)
+		viper.Set("trello.lists", &tCfg.Lists)
 
 		labels, err := tSrv.GetLabels()
 		if err != nil {
@@ -213,7 +214,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		trelloConfig.Labels.Jira = choice[:trello.IDLength]
+		tCfg.Labels.Jira = choice[:trello.IDLength]
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select Blocked label",
@@ -221,7 +222,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		trelloConfig.Labels.Blocked = choice[:trello.IDLength]
+		tCfg.Labels.Blocked = choice[:trello.IDLength]
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select Task label",
@@ -229,7 +230,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		trelloConfig.Labels.Task = choice[:trello.IDLength]
+		tCfg.Labels.Task = choice[:trello.IDLength]
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select Bug label",
@@ -237,7 +238,7 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		trelloConfig.Labels.Bug = choice[:trello.IDLength]
+		tCfg.Labels.Bug = choice[:trello.IDLength]
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select Story label",
@@ -245,9 +246,11 @@ var configureCmd = &cobra.Command{
 		}, &choice)
 
 		removeKeyFromSlice(keys, choice)
-		trelloConfig.Labels.Story = choice[:trello.IDLength]
+		tCfg.Labels.Story = choice[:trello.IDLength]
 
-		viper.Set("trello.labels", &trelloConfig.Labels)
+		viper.Set("trello.labels", &tCfg.Labels)
+
+		tCfg.Debug = false
 
 		if err := viper.WriteConfig(); err != nil {
 			log.Fatalf("Can't write config: %s", err)

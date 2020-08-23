@@ -7,4 +7,5 @@ type Config struct {
 	UserID string
 	Lists  Lists
 	Labels Labels
+	Debug  bool
 }

@@ -22,7 +22,10 @@ THE SOFTWARE.
 package trello
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/adlio/trello"
+	"io/ioutil"
 	"strings"
 )
 
@@ -32,28 +35,9 @@ type Client struct {
 	board *trello.Board
 }
 
-func NewServer(cfg Config) *Client {
+func NewClient(cfg *Config) *Client {
 	return &Client{
-		Config: Config{
-			APIKey: cfg.APIKey,
-			Token:  cfg.Token,
-			Board:  cfg.Board,
-			UserID: cfg.UserID,
-			Lists: Lists{
-				Todo:   cfg.Lists.Todo,
-				Doing:  cfg.Lists.Doing,
-				Done:   cfg.Lists.Done,
-				Review: cfg.Lists.Review,
-				Bucket: cfg.Lists.Bucket,
-			},
-			Labels: Labels{
-				Jira:    cfg.Labels.Jira,
-				Blocked: cfg.Labels.Blocked,
-				Bug:     cfg.Labels.Bug,
-				Task:    cfg.Labels.Task,
-				Story:   cfg.Labels.Story,
-			},
-		},
+		Config: *cfg,
 	}
 }
 
@@ -84,6 +68,8 @@ func (t *Client) GetBoards() (map[string]*Board, error) {
 		}
 	}
 
+	t.writeToJSONFile(res, "boards.json")
+
 	return res, nil
 }
 
@@ -100,6 +86,8 @@ func (t *Client) GetLists() ([]*List, error) {
 			ID:   list.ID,
 		})
 	}
+
+	t.writeToJSONFile(res, "lists.json")
 
 	return res, nil
 }
@@ -124,6 +112,8 @@ func (t *Client) GetLabels() ([]*Label, error) {
 		})
 	}
 
+	t.writeToJSONFile(res, "labels.json")
+
 	return res, nil
 }
 
@@ -138,10 +128,6 @@ func (t *Client) GetBoardByID(id string) (*Board, error) {
 		Name: board.Name,
 		ID:   board.ID,
 	}, err
-}
-
-func (t *Client) GetMembers() ([]*trello.Member, error) {
-	return t.board.GetMembers(trello.Defaults())
 }
 
 func (t *Client) GetCards() ([]*Card, error) {
@@ -163,7 +149,20 @@ func (t *Client) GetCards() ([]*Card, error) {
 		})
 	}
 
+	t.writeToJSONFile(res, "cards.json")
+
 	return res, nil
+}
+
+func (t *Client) writeToJSONFile(value interface{}, fileName string) {
+	if t.Debug {
+		b, _ := json.MarshalIndent(value, "", "  ")
+		err := ioutil.WriteFile(fileName, b, 0600)
+
+		if err != nil {
+			fmt.Printf("can't write debug file: %s", err)
+		}
+	}
 }
 
 func (t *Client) CreateCard(card *Card) error {
@@ -213,5 +212,11 @@ func (t *Client) GetSelfMemberID() (string, error) {
 		return "", err
 	}
 
+	t.writeToJSONFile(member, "self_id.json")
+
 	return member.ID, nil
+}
+
+func (t *Client) GetConfig() *Config {
+	return &t.Config
 }

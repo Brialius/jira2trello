@@ -47,7 +47,9 @@ var syncCmd = &cobra.Command{
 			log.Fatalf("Can't parse Trello config: %s", err)
 		}
 
-		app.Sync(jira.NewServer(jCfg), trello.NewServer(tCfg))
+		tCfg.Debug, jCfg.Debug = Debug, Debug
+
+		app.NewSyncService(jira.NewServer(&jCfg), trello.NewClient(&tCfg)).Sync()
 	},
 }
 
