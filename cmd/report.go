@@ -40,6 +40,9 @@ var reportCmd = &cobra.Command{
 		if err := viper.UnmarshalKey("trello", &tCfg); err != nil {
 			log.Fatalf("Can't parse Trello config: %s", err)
 		}
+
+		tCfg.Debug = Debug
+
 		app.Report(trello.NewClient(&tCfg))
 	},
 }

@@ -22,7 +22,10 @@ THE SOFTWARE.
 package jira
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/andygrunwald/go-jira"
+	"io/ioutil"
 	"time"
 )
 
@@ -82,5 +85,18 @@ func (j *Client) GetUserTasks() (map[string]*Task, error) {
 		}
 	}
 
+	j.writeToJSONFile(res, "jira_tasks.json")
+
 	return res, nil
+}
+
+func (j *Client) writeToJSONFile(value interface{}, fileName string) {
+	if j.Debug {
+		b, _ := json.MarshalIndent(value, "", "  ")
+		err := ioutil.WriteFile(fileName, b, 0644)
+
+		if err != nil {
+			fmt.Printf("can't write debug file: %s", err)
+		}
+	}
 }

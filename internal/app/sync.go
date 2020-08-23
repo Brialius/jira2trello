@@ -25,9 +25,11 @@ import (
 	"fmt"
 	"github.com/Brialius/jira2trello/internal/jira"
 	"github.com/Brialius/jira2trello/internal/trello"
+	"io"
 	"log"
 	"os"
 	"reflect"
+	"sort"
 	"strings"
 	"text/tabwriter"
 )
@@ -63,7 +65,7 @@ func (s *SyncService) Sync() {
 		log.Fatalf("can't get jira tasks: %s", err)
 	}
 
-	s.printJiraTasks()
+	s.printJiraTasks(os.Stdout)
 
 	if s.tCards, err = getTrelloCards(s.tCli); err != nil {
 		log.Fatalf("can't get trello cards: %s", err)
@@ -213,11 +215,22 @@ func getTrelloCards(tCli trello.Connector) (map[string]*trello.Card, error) {
 	return tCards, nil
 }
 
-func (s *SyncService) printJiraTasks() {
+func (s *SyncService) printJiraTasks(out io.Writer) {
 	w := new(tabwriter.Writer)
-	w.Init(os.Stdout, 0, 0, 0, ' ', tabwriter.Debug)
+
+	w.Init(out, 0, 0, 0, ' ', tabwriter.Debug)
+
+	list := make([]*jira.Task, 0, len(s.jTasks))
 
 	for _, task := range s.jTasks {
+		list = append(list, task)
+	}
+
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].Created.Before(list[j].Created)
+	})
+
+	for _, task := range list {
 		_, _ = fmt.Fprintln(w, task.TabString())
 	}
 

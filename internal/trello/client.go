@@ -22,7 +22,10 @@ THE SOFTWARE.
 package trello
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/adlio/trello"
+	"io/ioutil"
 	"strings"
 )
 
@@ -65,6 +68,8 @@ func (t *Client) GetBoards() (map[string]*Board, error) {
 		}
 	}
 
+	t.writeToJSONFile(res, "boards.json")
+
 	return res, nil
 }
 
@@ -81,6 +86,8 @@ func (t *Client) GetLists() ([]*List, error) {
 			ID:   list.ID,
 		})
 	}
+
+	t.writeToJSONFile(res, "lists.json")
 
 	return res, nil
 }
@@ -105,6 +112,8 @@ func (t *Client) GetLabels() ([]*Label, error) {
 		})
 	}
 
+	t.writeToJSONFile(res, "labels.json")
+
 	return res, nil
 }
 
@@ -119,10 +128,6 @@ func (t *Client) GetBoardByID(id string) (*Board, error) {
 		Name: board.Name,
 		ID:   board.ID,
 	}, err
-}
-
-func (t *Client) GetMembers() ([]*trello.Member, error) {
-	return t.board.GetMembers(trello.Defaults())
 }
 
 func (t *Client) GetCards() ([]*Card, error) {
@@ -144,7 +149,20 @@ func (t *Client) GetCards() ([]*Card, error) {
 		})
 	}
 
+	t.writeToJSONFile(res, "cards.json")
+
 	return res, nil
+}
+
+func (t *Client) writeToJSONFile(value interface{}, fileName string) {
+	if t.Debug {
+		b, _ := json.MarshalIndent(value, "", "  ")
+		err := ioutil.WriteFile(fileName, b, 0644)
+
+		if err != nil {
+			fmt.Printf("can't write debug file: %s", err)
+		}
+	}
 }
 
 func (t *Client) CreateCard(card *Card) error {
@@ -193,6 +211,8 @@ func (t *Client) GetSelfMemberID() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	t.writeToJSONFile(member, "self_id.json")
 
 	return member.ID, nil
 }
