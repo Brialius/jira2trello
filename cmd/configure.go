@@ -24,7 +24,6 @@ package cmd
 import (
 	"fmt"
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/Brialius/jira2trello/internal/app"
 	"github.com/Brialius/jira2trello/internal/jira"
 	"github.com/Brialius/jira2trello/internal/trello"
 	"github.com/spf13/cobra"
@@ -40,12 +39,6 @@ var configureCmd = &cobra.Command{
 	Short: "Ask configuration settings and save them to file",
 	Long:  `Ask configuration settings and save them to file`,
 	Run: func(cmd *cobra.Command, args []string) {
-		config := app.Config{}
-
-		if err := viper.UnmarshalKey("users", &config.Users); err != nil {
-			log.Printf("Can't get users from config: %s", err)
-		}
-
 		jiraConfig := jira.Config{}
 
 		jiraQs := []*survey.Question{
@@ -109,10 +102,19 @@ var configureCmd = &cobra.Command{
 		viper.Set("trello.token", trelloConfig.Token)
 
 		tSrv := trello.NewServer(trelloConfig)
-		err := tSrv.Connect()
-		if err != nil {
+
+		if err := tSrv.Connect(); err != nil {
 			log.Fatalf("Can't connect to trello: %s", err)
 		}
+
+		userID, err := tSrv.GetSelfMemberID()
+		if err != nil {
+			log.Fatalf("can't get self id: %s", err)
+		}
+
+		trelloConfig.UserID = userID
+
+		viper.Set("trello.userid", trelloConfig.UserID)
 
 		boards, err := tSrv.GetBoards()
 		if err != nil {
@@ -246,16 +248,6 @@ var configureCmd = &cobra.Command{
 		trelloConfig.Labels.Story = choice[:trello.IDLength]
 
 		viper.Set("trello.labels", &trelloConfig.Labels)
-
-		members, err := tSrv.GetMembers()
-		if err != nil {
-			log.Fatalf("can't get members for %s board", board)
-		}
-
-		fmt.Printf("\nList of users from %s board:\n", board[trello.IDLength+2:])
-		for _, member := range members {
-			fmt.Printf("%s - %s(%s)\n", member.ID, member.FullName, member.Username)
-		}
 
 		if err := viper.WriteConfig(); err != nil {
 			log.Fatalf("Can't write config: %s", err)
