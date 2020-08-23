@@ -128,6 +128,7 @@ func (t *Client) GetUserJiraCards() ([]*Card, error) {
 				ID:        card.ID,
 				Name:      card.Name,
 				ListID:    card.IDList,
+				List:      GetListNameByID(card.IDList, t.Lists),
 				Key:       strings.TrimSpace(strings.Split(card.Name, "|")[0]),
 				Desc:      card.Desc,
 				IDLabels:  &card.IDLabels,
@@ -157,7 +158,7 @@ func (t *Client) CreateCard(card *Card) error {
 	return t.cli.CreateCard(&trello.Card{
 		Name:      card.Name,
 		IDLabels:  *card.IDLabels,
-		IDList:    card.ListID[:IDLength],
+		IDList:    card.ListID,
 		IDMembers: strings.Split(card.IDMembers, ","),
 		Desc:      card.Desc,
 	}, trello.Defaults())
@@ -169,7 +170,7 @@ func (t *Client) MoveCardToList(cardID, listID string) error {
 		return err
 	}
 
-	return card.MoveToList(listID[:IDLength], trello.Defaults())
+	return card.MoveToList(listID, trello.Defaults())
 }
 
 func (t *Client) UpdateCardLabels(cardID, labels string) error {

@@ -50,20 +50,6 @@ func TestCard_IsInAnyOfLists(t *testing.T) {
 			},
 			want: false,
 		},
-		{
-			name: "long",
-			fields: fields{
-				ListID: "123456789012345678901235",
-			},
-			args: args{
-				lists: []string{
-					"123456789012345678901234 - Issues and Requests",
-					"123456789012345678901235 - Done",
-					"123456789012345678901236 - Doing",
-				},
-			},
-			want: true,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

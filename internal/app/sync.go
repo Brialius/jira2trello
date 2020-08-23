@@ -85,8 +85,8 @@ func (s *SyncService) syncCompletedTasks() error {
 
 	for key, tCard := range s.tCards {
 		if _, ok := s.jTasks[key]; !ok {
-			if tCard.ListID != s.tCli.GetConfig().Lists.Done[:trello.IDLength] {
-				if err := s.tCli.MoveCardToList(tCard.ID, s.tCli.GetConfig().Lists.Done[:trello.IDLength]); err != nil {
+			if tCard.ListID != s.tCli.GetConfig().Lists.Done {
+				if err := s.tCli.MoveCardToList(tCard.ID, s.tCli.GetConfig().Lists.Done); err != nil {
 					return fmt.Errorf("can't move card to `Done` list: %w", err)
 				}
 
@@ -102,15 +102,15 @@ func (s *SyncService) syncTasks() error {
 	fmt.Println("Sync tasks...")
 
 	for key, jTask := range s.jTasks {
-		list := s.tCli.GetConfig().Lists.Todo
+		listID := s.tCli.GetConfig().Lists.Todo
 		labels := make([]string, 0)
 		labels = append(labels, s.tCli.GetConfig().Labels.Jira)
 
 		switch {
 		case strings.Contains(jTask.Status, "In Progress"):
-			list = s.tCli.GetConfig().Lists.Doing
+			listID = s.tCli.GetConfig().Lists.Doing
 		case strings.Contains(jTask.Status, "Dependency") || strings.Contains(jTask.Status, "Blocked"):
-			list = s.tCli.GetConfig().Lists.Doing
+			listID = s.tCli.GetConfig().Lists.Doing
 			labels = append(labels, s.tCli.GetConfig().Labels.Blocked)
 		}
 
@@ -126,14 +126,14 @@ func (s *SyncService) syncTasks() error {
 		}
 
 		if tCard, ok := s.tCards[key]; !ok {
-			if err := s.addCardToList(jTask, list, key, labels); err != nil {
+			if err := s.addCardToList(jTask, listID, key, labels); err != nil {
 				return fmt.Errorf("can't add task to list: %w", err)
 			}
 		} else {
 			if err := s.updateCardLabels(tCard, labels); err != nil {
 				return err
 			}
-			if err := s.updateCardList(tCard, list, jTask); err != nil {
+			if err := s.updateCardList(tCard, listID, jTask); err != nil {
 				return err
 			}
 		}
@@ -142,9 +142,9 @@ func (s *SyncService) syncTasks() error {
 	return nil
 }
 
-func (s *SyncService) updateCardList(tCard *trello.Card, list string, task *jira.Task) error {
-	if tCard.ListID != list[:trello.IDLength] {
-		if list == s.tCli.GetConfig().Lists.Doing || list == s.tCli.GetConfig().Lists.Todo {
+func (s *SyncService) updateCardList(tCard *trello.Card, listID string, task *jira.Task) error {
+	if tCard.ListID != listID {
+		if listID == s.tCli.GetConfig().Lists.Doing || listID == s.tCli.GetConfig().Lists.Todo {
 			if tCard.IsInAnyOfLists([]string{
 				s.tCli.GetConfig().Lists.Bucket,
 				s.tCli.GetConfig().Lists.Review,
@@ -153,8 +153,8 @@ func (s *SyncService) updateCardList(tCard *trello.Card, list string, task *jira
 			}
 		}
 
-		fmt.Printf("Moving %s to %s list\n", task.Key, list[trello.IDLength+3:])
-		err := s.tCli.MoveCardToList(tCard.ID, list)
+		fmt.Printf("Moving %s to %s list\n", task.Key, trello.GetListNameByID(listID, s.tCli.GetConfig().Lists))
+		err := s.tCli.MoveCardToList(tCard.ID, listID)
 
 		if err != nil {
 			return fmt.Errorf("can't move card to list: %w", err)
@@ -177,8 +177,8 @@ func (s *SyncService) updateCardLabels(tCard *trello.Card, labels []string) erro
 	return nil
 }
 
-func (s *SyncService) addCardToList(task *jira.Task, list string, key string, labels []string) error {
-	fmt.Printf("Adding %s to %s list..\n", task.Key, list[trello.IDLength+3:])
+func (s *SyncService) addCardToList(task *jira.Task, listID string, key string, labels []string) error {
+	fmt.Printf("Adding %s to %s list..\n", task.Key, trello.GetListNameByID(listID, s.tCli.GetConfig().Lists))
 	desc := task.Desc + "\nJira link: " + task.Link + "\nType: " + task.Type
 
 	if task.ParentKey != "" {
@@ -187,7 +187,7 @@ func (s *SyncService) addCardToList(task *jira.Task, list string, key string, la
 
 	return s.tCli.CreateCard(&trello.Card{
 		Name:      key + " | " + task.Summary,
-		ListID:    list,
+		ListID:    listID,
 		Desc:      desc,
 		IDLabels:  &labels,
 		IDMembers: s.tCli.GetConfig().UserID,
