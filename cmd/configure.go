@@ -124,21 +124,23 @@ var configureCmd = &cobra.Command{
 			log.Fatalf("Can't get trello boards: %s", err)
 		}
 
-		keys := make([]string, 0, len(boards))
-		for k, v := range boards {
-			keys = append(keys, k+" - "+v.Name)
+		boardNames := make([]string, 0, len(boards))
+
+		for name := range boards {
+			boardNames = append(boardNames, name)
 		}
-		sort.Strings(keys)
+
+		sort.Strings(boardNames)
 
 		var board string
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select trello board",
-			Options: keys,
+			Options: boardNames,
 		}, &board)
 
-		tCfg.Board = board[:trello.IDLength]
+		tCfg.Board = boards[board].ID
 
-		if err := tCli.SetBoard(board[:trello.IDLength]); err != nil {
+		if err := tCli.SetBoard(); err != nil {
 			log.Fatalf("Can't set trello board: %s", err)
 		}
 
@@ -149,53 +151,54 @@ var configureCmd = &cobra.Command{
 			log.Fatalf("Can't get trello lists: %s", err)
 		}
 
-		keys = make([]string, 0, len(lists))
-		for _, list := range lists {
-			keys = append(keys, list.ID+" - "+list.Name)
-		}
-		sort.Strings(keys)
+		listNames := make([]string, 0, len(lists))
 
-		var choice string
+		for name := range lists {
+			listNames = append(listNames, name)
+		}
+
+		sort.Strings(listNames)
+
+		var list string
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select todo list",
-			Options: keys,
-		}, &choice)
+			Options: listNames,
+		}, &list)
 
-		removeKeyFromSlice(keys, choice)
-		tCfg.Lists.Todo = choice
+		removeKeyFromSlice(listNames, list)
+		tCfg.Lists.Todo = lists[list].ID
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select doing list",
-			Options: keys,
-		}, &choice)
+			Options: listNames,
+		}, &list)
 
-		removeKeyFromSlice(keys, choice)
-		tCfg.Lists.Doing = choice
+		removeKeyFromSlice(listNames, list)
+		tCfg.Lists.Doing = lists[list].ID
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select done list",
-			Options: keys,
-		}, &choice)
+			Options: listNames,
+		}, &list)
 
-		removeKeyFromSlice(keys, choice)
-		tCfg.Lists.Done = choice
+		removeKeyFromSlice(boardNames, list)
+		tCfg.Lists.Done = lists[list].ID
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select review list",
-			Options: keys,
-		}, &choice)
+			Options: listNames,
+		}, &list)
 
-		removeKeyFromSlice(keys, choice)
-		tCfg.Lists.Review = choice
+		removeKeyFromSlice(listNames, list)
+		tCfg.Lists.Review = lists[list].ID
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select bucket list",
-			Options: keys,
-		}, &choice)
+			Options: listNames,
+		}, &list)
 
-		removeKeyFromSlice(keys, choice)
-		tCfg.Lists.Bucket = choice
+		tCfg.Lists.Bucket = lists[list].ID
 
 		viper.Set("trello.lists", &tCfg.Lists)
 
@@ -204,51 +207,54 @@ var configureCmd = &cobra.Command{
 			log.Fatalf("Can't get trello labels: %s", err)
 		}
 
-		keys = make([]string, 0, len(labels))
-		for _, label := range labels {
-			keys = append(keys, label.ID+" - "+label.Name)
+		labelNames := make([]string, 0, len(labels))
+
+		for name := range labels {
+			labelNames = append(labelNames, name)
 		}
-		sort.Strings(keys)
+
+		sort.Strings(labelNames)
+
+		var label string
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select Jira label",
-			Options: keys,
-		}, &choice)
+			Options: labelNames,
+		}, &label)
 
-		removeKeyFromSlice(keys, choice)
-		tCfg.Labels.Jira = choice[:trello.IDLength]
+		removeKeyFromSlice(labelNames, label)
+		tCfg.Labels.Jira = labels[label].ID
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select Blocked label",
-			Options: keys,
-		}, &choice)
+			Options: labelNames,
+		}, &label)
 
-		removeKeyFromSlice(keys, choice)
-		tCfg.Labels.Blocked = choice[:trello.IDLength]
+		removeKeyFromSlice(labelNames, label)
+		tCfg.Labels.Blocked = labels[label].ID
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select Task label",
-			Options: keys,
-		}, &choice)
+			Options: labelNames,
+		}, &label)
 
-		removeKeyFromSlice(keys, choice)
-		tCfg.Labels.Task = choice[:trello.IDLength]
+		removeKeyFromSlice(labelNames, label)
+		tCfg.Labels.Task = labels[label].ID
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select Bug label",
-			Options: keys,
-		}, &choice)
+			Options: labelNames,
+		}, &label)
 
-		removeKeyFromSlice(keys, choice)
-		tCfg.Labels.Bug = choice[:trello.IDLength]
+		removeKeyFromSlice(labelNames, label)
+		tCfg.Labels.Bug = labels[label].ID
 
 		_ = survey.AskOne(&survey.Select{
 			Message: "Please select Story label",
-			Options: keys,
-		}, &choice)
+			Options: labelNames,
+		}, &label)
 
-		removeKeyFromSlice(keys, choice)
-		tCfg.Labels.Story = choice[:trello.IDLength]
+		tCfg.Labels.Story = labels[label].ID
 
 		viper.Set("trello.labels", &tCfg.Labels)
 

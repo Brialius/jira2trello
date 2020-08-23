@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"github.com/Brialius/jira2trello/internal/trello"
 	"log"
+	"sort"
 )
 
 func Report(tCli trello.Connector) {
@@ -32,27 +33,42 @@ func Report(tCli trello.Connector) {
 		log.Fatalf("Can't connect to trello: %s", err)
 	}
 
-	tCards, err := getTrelloCards(tCli)
+	tCards, err := tCli.GetUserJiraCards()
 	if err != nil {
 		log.Fatalf("can't get trello cards: %s", err)
 	}
 
-	fmt.Println("Searching current trello tasks..")
+	sort.Slice(tCards, func(i, j int) bool {
+		return tCards[i].List > tCards[j].List
+	})
+
+	var (
+		done       int
+		inProgress int
+		inReview   int
+	)
+
+	fmt.Println("\n----------------------------------")
 
 	for _, tTask := range tCards {
 		switch {
 		case tTask.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Done}):
-			fmt.Println(tTask.Name + " - Done")
-			fmt.Println("https://jira.inbcu.com/browse/" + tTask.Key)
-			fmt.Println("---------------------------------------------")
+			fmt.Printf("%s - Done\n", tTask.Name)
+			fmt.Printf("https://jira.inbcu.com/browse/%s\n", tTask.Key)
+			done++
 		case tTask.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Doing}):
-			fmt.Println(tTask.Name + " - In progress")
-			fmt.Println("https://jira.inbcu.com/browse/" + tTask.Key)
-			fmt.Println("---------------------------------------------")
+			fmt.Printf("%s - In progress\n", tTask.Name)
+			fmt.Printf("https://jira.inbcu.com/browse/%s\n", tTask.Key)
+			inProgress++
 		case tTask.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Review}):
-			fmt.Println(tTask.Name + " - In review")
-			fmt.Println("https://jira.inbcu.com/browse/" + tTask.Key)
-			fmt.Println("---------------------------------------------")
+			fmt.Printf("%s - In review\n", tTask.Name)
+			fmt.Printf("https://jira.inbcu.com/browse/%s\n", tTask.Key)
+			inReview++
 		}
 	}
+
+	fmt.Println("\n----------------------------------")
+	fmt.Printf("In progress: %d\n", inProgress)
+	fmt.Printf("In review: %d\n", inReview)
+	fmt.Printf("Done: %d\n", done)
 }

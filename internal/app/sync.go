@@ -199,17 +199,13 @@ func getTrelloCards(tCli trello.Connector) (map[string]*trello.Card, error) {
 
 	tCards := map[string]*trello.Card{}
 
-	cards, err := tCli.GetCards()
+	cards, err := tCli.GetUserJiraCards()
 	if err != nil {
 		return nil, err
 	}
 
 	for _, card := range cards {
-		for _, labelID := range *card.IDLabels {
-			if labelID == tCli.GetConfig().Labels.Jira && strings.Contains(card.IDMembers, tCli.GetConfig().UserID) {
-				tCards[card.Key] = card
-			}
-		}
+		tCards[card.Key] = card
 	}
 
 	return tCards, nil
