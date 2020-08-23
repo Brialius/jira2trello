@@ -218,7 +218,7 @@ func getTrelloCards(tCli trello.Connector) (map[string]*trello.Card, error) {
 func (s *SyncService) printJiraTasks(out io.Writer) {
 	w := new(tabwriter.Writer)
 
-	w.Init(out, 0, 0, 0, ' ', tabwriter.Debug)
+	w.Init(out, 0, 0, 4, ' ', tabwriter.FilterHTML+tabwriter.StripEscape)
 
 	list := make([]*jira.Task, 0, len(s.jTasks))
 
