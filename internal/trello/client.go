@@ -157,7 +157,7 @@ func (t *Client) GetCards() ([]*Card, error) {
 func (t *Client) writeToJSONFile(value interface{}, fileName string) {
 	if t.Debug {
 		b, _ := json.MarshalIndent(value, "", "  ")
-		err := ioutil.WriteFile(fileName, b, 0644)
+		err := ioutil.WriteFile(fileName, b, 0600)
 
 		if err != nil {
 			fmt.Printf("can't write debug file: %s", err)
