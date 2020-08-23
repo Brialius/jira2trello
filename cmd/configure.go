@@ -80,6 +80,7 @@ var configureCmd = &cobra.Command{
 			{
 				Name: "apiKey",
 				Prompt: &survey.Input{
+					Help:    "API key can be generated here: https://trello.com/app-key",
 					Message: "What is trello API key?",
 					Default: viper.GetString("trello.apiKey"),
 				},
@@ -88,6 +89,7 @@ var configureCmd = &cobra.Command{
 			{
 				Name: "token",
 				Prompt: &survey.Password{
+					Help:    "Token can be generated here: https://trello.com/app-key",
 					Message: "What is trello token?",
 				},
 			},
@@ -102,13 +104,13 @@ var configureCmd = &cobra.Command{
 		viper.Set("trello.apiKey", tCfg.APIKey)
 		viper.Set("trello.token", tCfg.Token)
 
-		tSrv := trello.NewClient(&tCfg)
+		tCli := trello.NewClient(&tCfg)
 
-		if err := tSrv.Connect(); err != nil {
+		if err := tCli.Connect(); err != nil {
 			log.Fatalf("Can't connect to trello: %s", err)
 		}
 
-		userID, err := tSrv.GetSelfMemberID()
+		userID, err := tCli.GetSelfMemberID()
 		if err != nil {
 			log.Fatalf("can't get self id: %s", err)
 		}
@@ -117,7 +119,7 @@ var configureCmd = &cobra.Command{
 
 		viper.Set("trello.userid", tCfg.UserID)
 
-		boards, err := tSrv.GetBoards()
+		boards, err := tCli.GetBoards()
 		if err != nil {
 			log.Fatalf("Can't get trello boards: %s", err)
 		}
@@ -136,13 +138,13 @@ var configureCmd = &cobra.Command{
 
 		tCfg.Board = board[:trello.IDLength]
 
-		if err := tSrv.SetBoard(board[:trello.IDLength]); err != nil {
+		if err := tCli.SetBoard(board[:trello.IDLength]); err != nil {
 			log.Fatalf("Can't set trello board: %s", err)
 		}
 
 		viper.Set("trello.board", &tCfg.Board)
 
-		lists, err := tSrv.GetLists()
+		lists, err := tCli.GetLists()
 		if err != nil {
 			log.Fatalf("Can't get trello lists: %s", err)
 		}
@@ -197,7 +199,7 @@ var configureCmd = &cobra.Command{
 
 		viper.Set("trello.lists", &tCfg.Lists)
 
-		labels, err := tSrv.GetLabels()
+		labels, err := tCli.GetLabels()
 		if err != nil {
 			log.Fatalf("Can't get trello labels: %s", err)
 		}
