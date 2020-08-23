@@ -14,6 +14,7 @@ Usage:
    
    Flags:
          --config string   config file (default is $HOME/.jira2trello.yaml)
+         --debug           write debug info to logs and files
      -h, --help            help for jira2trello
    
    Use "jira2trello [command] --help" for more information about a command.   
