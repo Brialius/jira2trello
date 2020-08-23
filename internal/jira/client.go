@@ -30,13 +30,13 @@ import (
 )
 
 type Client struct {
-	Config
+	*Config
 	cli *jira.Client
 }
 
 func NewServer(cfg *Config) *Client {
 	return &Client{
-		Config: *cfg,
+		Config: cfg,
 	}
 }
 

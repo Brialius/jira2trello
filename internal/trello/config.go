@@ -5,7 +5,7 @@ type Config struct {
 	Token  string
 	Board  string
 	UserID string
-	Lists  Lists
-	Labels Labels
+	Lists  *Lists
+	Labels *Labels
 	Debug  bool
 }

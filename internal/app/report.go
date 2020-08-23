@@ -24,7 +24,10 @@ package app
 import (
 	"fmt"
 	"github.com/Brialius/jira2trello/internal/trello"
+	"io"
 	"log"
+	"os"
+	"sort"
 )
 
 func Report(tCli trello.Connector) {
@@ -32,27 +35,46 @@ func Report(tCli trello.Connector) {
 		log.Fatalf("Can't connect to trello: %s", err)
 	}
 
-	tCards, err := getTrelloCards(tCli)
+	tCards, err := tCli.GetUserJiraCards()
 	if err != nil {
 		log.Fatalf("can't get trello cards: %s", err)
 	}
 
-	fmt.Println("Searching current trello tasks..")
+	sort.Slice(tCards, func(i, j int) bool {
+		return tCards[i].List > tCards[j].List
+	})
+
+	printReport(os.Stdout, tCli, tCards)
+}
+
+func printReport(out io.Writer, tCli trello.Connector, tCards []*trello.Card) {
+	var (
+		done       int
+		inProgress int
+		inReview   int
+	)
+
+	_, _ = fmt.Fprintln(out, "\n----------------------------------")
 
 	for _, tTask := range tCards {
 		switch {
 		case tTask.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Done}):
-			fmt.Println(tTask.Name + " - Done")
-			fmt.Println("https://jira.inbcu.com/browse/" + tTask.Key)
-			fmt.Println("---------------------------------------------")
+			_, _ = fmt.Fprintf(out, "%s - Done\n", tTask.Name)
+			_, _ = fmt.Fprintf(out, "https://jira.inbcu.com/browse/%s\n", tTask.Key)
+			done++
 		case tTask.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Doing}):
-			fmt.Println(tTask.Name + " - In progress")
-			fmt.Println("https://jira.inbcu.com/browse/" + tTask.Key)
-			fmt.Println("---------------------------------------------")
+			_, _ = fmt.Fprintf(out, "%s - In progress\n", tTask.Name)
+			_, _ = fmt.Fprintf(out, "https://jira.inbcu.com/browse/%s\n", tTask.Key)
+			inProgress++
 		case tTask.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Review}):
-			fmt.Println(tTask.Name + " - In review")
-			fmt.Println("https://jira.inbcu.com/browse/" + tTask.Key)
-			fmt.Println("---------------------------------------------")
+			_, _ = fmt.Fprintf(out, "%s - In review\n", tTask.Name)
+			_, _ = fmt.Fprintf(out, "https://jira.inbcu.com/browse/%s\n", tTask.Key)
+			inReview++
 		}
 	}
+
+	_, _ = fmt.Fprintln(out, "\n----------------------------------")
+	_, _ = fmt.Fprintf(out, "In progress: %d\n", inProgress)
+	_, _ = fmt.Fprintf(out, "In review: %d\n", inReview)
+	_, _ = fmt.Fprintf(out, "Done: %d\n", done)
 }

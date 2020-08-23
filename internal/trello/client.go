@@ -30,23 +30,21 @@ import (
 )
 
 type Client struct {
-	Config
+	*Config
 	cli   *trello.Client
 	board *trello.Board
 }
 
 func NewClient(cfg *Config) *Client {
 	return &Client{
-		Config: *cfg,
+		Config: cfg,
 	}
 }
 
 func (t *Client) Connect() error {
 	t.cli = trello.NewClient(t.APIKey, t.Token)
 	if len(t.Board) > 0 {
-		if err := t.SetBoard(t.Board); err != nil {
-			return err
-		}
+		return t.SetBoard()
 	}
 
 	return nil
@@ -61,95 +59,86 @@ func (t *Client) GetBoards() (map[string]*Board, error) {
 	}
 
 	for _, board := range boards {
-		res[board.ID] = &Board{
+		res[board.Name] = &Board{
 			URL:  board.URL,
 			Name: board.Name,
 			ID:   board.ID,
 		}
 	}
 
-	t.writeToJSONFile(res, "boards.json")
+	t.writeToJSONFile(boards, "boards.json")
+	t.writeToJSONFile(res, "boards_result.json")
 
 	return res, nil
 }
 
-func (t *Client) GetLists() ([]*List, error) {
+func (t *Client) GetLists() (map[string]*List, error) {
 	lists, err := t.board.GetLists(trello.Defaults())
 	if err != nil {
 		return nil, err
 	}
 
-	res := make([]*List, 0, len(lists))
+	res := map[string]*List{}
 	for _, list := range lists {
-		res = append(res, &List{
+		res[list.Name] = &List{
 			Name: list.Name,
 			ID:   list.ID,
-		})
+		}
 	}
 
-	t.writeToJSONFile(res, "lists.json")
+	t.writeToJSONFile(lists, "lists.json")
+	t.writeToJSONFile(res, "lists_result.json")
 
 	return res, nil
 }
 
-func (t *Client) GetLabels() ([]*Label, error) {
-	res := make([]*Label, 0)
-	board, err := t.cli.GetBoard(t.Board, trello.Defaults())
+func (t *Client) GetLabels() (map[string]*Label, error) {
+	res := map[string]*Label{}
 
-	if err != nil {
-		return nil, err
-	}
-
-	labels, err := board.GetLabels(trello.Defaults())
+	labels, err := t.board.GetLabels(trello.Defaults())
 	if err != nil {
 		return nil, err
 	}
 
 	for _, label := range labels {
-		res = append(res, &Label{
+		res[label.Name] = &Label{
 			Name: label.Name,
 			ID:   label.ID,
-		})
+		}
 	}
 
-	t.writeToJSONFile(res, "labels.json")
+	t.writeToJSONFile(labels, "labels.json")
+	t.writeToJSONFile(res, "labels_result.json")
 
 	return res, nil
 }
 
-func (t *Client) GetBoardByID(id string) (*Board, error) {
-	board, err := t.cli.GetBoard(id, trello.Defaults())
-	if err != nil {
-		return nil, err
-	}
-
-	return &Board{
-		URL:  board.URL,
-		Name: board.Name,
-		ID:   board.ID,
-	}, err
-}
-
-func (t *Client) GetCards() ([]*Card, error) {
+func (t *Client) GetUserJiraCards() ([]*Card, error) {
 	cards, err := t.board.GetCards(trello.Defaults())
 	if err != nil {
 		return nil, err
 	}
 
 	res := make([]*Card, 0, len(cards))
+
 	for _, card := range cards {
-		res = append(res, &Card{
-			ID:        card.ID,
-			Name:      card.Name,
-			ListID:    card.IDList,
-			Key:       strings.TrimSpace(strings.Split(card.Name, "|")[0]),
-			Desc:      card.Desc,
-			IDLabels:  &card.IDLabels,
-			IDMembers: strings.Join(card.IDMembers, ","),
-		})
+		if strings.Contains(strings.Join(card.IDMembers, ","), t.UserID) &&
+			strings.Contains(strings.Join(card.IDLabels, ","), t.Labels.Jira) {
+			res = append(res, &Card{
+				ID:        card.ID,
+				Name:      card.Name,
+				ListID:    card.IDList,
+				List:      GetListNameByID(card.IDList, t.Lists),
+				Key:       strings.TrimSpace(strings.Split(card.Name, "|")[0]),
+				Desc:      card.Desc,
+				IDLabels:  &card.IDLabels,
+				IDMembers: strings.Join(card.IDMembers, ","),
+			})
+		}
 	}
 
-	t.writeToJSONFile(res, "cards.json")
+	t.writeToJSONFile(cards, "cards.json")
+	t.writeToJSONFile(res, "cards_result.json")
 
 	return res, nil
 }
@@ -169,7 +158,7 @@ func (t *Client) CreateCard(card *Card) error {
 	return t.cli.CreateCard(&trello.Card{
 		Name:      card.Name,
 		IDLabels:  *card.IDLabels,
-		IDList:    card.ListID[:IDLength],
+		IDList:    card.ListID,
 		IDMembers: strings.Split(card.IDMembers, ","),
 		Desc:      card.Desc,
 	}, trello.Defaults())
@@ -181,7 +170,7 @@ func (t *Client) MoveCardToList(cardID, listID string) error {
 		return err
 	}
 
-	return card.MoveToList(listID[:IDLength], trello.Defaults())
+	return card.MoveToList(listID, trello.Defaults())
 }
 
 func (t *Client) UpdateCardLabels(cardID, labels string) error {
@@ -193,14 +182,13 @@ func (t *Client) UpdateCardLabels(cardID, labels string) error {
 	return card.Update(trello.Arguments{"idLabels": labels})
 }
 
-func (t *Client) SetBoard(id string) error {
-	t.Board = id
-	board, err := t.cli.GetBoard(id, trello.Defaults())
-
+func (t *Client) SetBoard() error {
+	board, err := t.cli.GetBoard(t.Board, trello.Defaults())
 	if err != nil {
 		return err
 	}
 
+	fmt.Printf("Using board: %s\n", board.Name)
 	t.board = board
 
 	return nil
@@ -218,5 +206,5 @@ func (t *Client) GetSelfMemberID() (string, error) {
 }
 
 func (t *Client) GetConfig() *Config {
-	return &t.Config
+	return t.Config
 }
