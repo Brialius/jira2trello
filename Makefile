@@ -46,7 +46,7 @@ generate:
 	go generate ./...
 
 .PHONY: build
-build: mod-refresh ## Build a version
+build: clean mod-refresh ## Build a version
 	go build $(BUILDFLAGS) -o $(BIN) $(MODULE)
 
 .PHONY: install
