@@ -40,11 +40,13 @@ lint: ## Run all the linters
 .PHONY: ci
 ci: setup lint build test ## Run all the tests and code checks
 
-.PHONY: build
-build: clean mod-refresh
+.PHONY: generate
+generate:
+	go get github.com/matryer/moq
+	go generate ./...
 
 .PHONY: build
-build: mod-refresh ## Build a version
+build: clean mod-refresh ## Build a version
 	go build $(BUILDFLAGS) -o $(BIN) $(MODULE)
 
 .PHONY: install

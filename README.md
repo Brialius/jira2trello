@@ -30,6 +30,7 @@ Usage:
 |install|install binary to `$GOPATH/bin`|
 |lint|run linters|
 |clean|run `go clean`|
+|generate|run `go generate ./...`|
 |mod-refresh|run `go mod tidy` and `go mod vendor`|
 |ci|run all steps needed for CI|
 |version|show current git tag if any matched to `v*` exists|

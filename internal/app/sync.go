@@ -35,13 +35,13 @@ import (
 )
 
 type SyncService struct {
-	jCli   jira.Connector
-	tCli   trello.Connector
+	jCli   JiraConnector
+	tCli   TrelloConnector
 	jTasks map[string]*jira.Task
 	tCards map[string]*trello.Card
 }
 
-func NewSyncService(jCli jira.Connector, tCli trello.Connector) *SyncService {
+func NewSyncService(jCli JiraConnector, tCli TrelloConnector) *SyncService {
 	return &SyncService{
 		jCli: jCli,
 		tCli: tCli,
@@ -106,12 +106,14 @@ func (s *SyncService) syncTasks() error {
 		labels := make([]string, 0)
 		labels = append(labels, s.tCli.GetConfig().Labels.Jira)
 
-		switch {
-		case strings.Contains(jTask.Status, "In Progress"):
+		switch jTask.Status {
+		case "In Progress", "In Dev / In Progress":
 			listID = s.tCli.GetConfig().Lists.Doing
-		case strings.Contains(jTask.Status, "Dependency") || strings.Contains(jTask.Status, "Blocked"):
+		case "Dependency", "Blocked":
 			listID = s.tCli.GetConfig().Lists.Doing
 			labels = append(labels, s.tCli.GetConfig().Labels.Blocked)
+		case "jTask.Status", "In QA Review":
+			listID = s.tCli.GetConfig().Lists.Review
 		}
 
 		switch jTask.Type {
@@ -194,7 +196,7 @@ func (s *SyncService) addCardToList(task *jira.Task, listID string, key string, 
 	})
 }
 
-func getTrelloCards(tCli trello.Connector) (map[string]*trello.Card, error) {
+func getTrelloCards(tCli TrelloConnector) (map[string]*trello.Card, error) {
 	fmt.Println("Getting Trello cards...")
 
 	tCards := map[string]*trello.Card{}

@@ -30,7 +30,7 @@ import (
 	"sort"
 )
 
-func Report(tCli trello.Connector) {
+func Report(tCli TrelloConnector) {
 	if err := tCli.Connect(); err != nil {
 		log.Fatalf("Can't connect to trello: %s", err)
 	}
@@ -47,7 +47,7 @@ func Report(tCli trello.Connector) {
 	printReport(os.Stdout, tCli, tCards)
 }
 
-func printReport(out io.Writer, tCli trello.Connector, tCards []*trello.Card) {
+func printReport(out io.Writer, tCli TrelloConnector, tCards []*trello.Card) {
 	var (
 		done       int
 		inProgress int
