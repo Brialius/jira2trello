@@ -164,21 +164,6 @@
     "ParentLink": "",
     "Type": "Story"
   },
-  "JIRA1-390": {
-    "Created": "2020-07-02T05:04:44-04:00",
-    "Updated": "2020-08-21T21:39:52-04:00",
-    "TimeSpent": 28800000000000,
-    "Summary": "Task name 390",
-    "Link": "https://jira-site/browse/JIRA1-390",
-    "Self": "https://jira-site/rest/api/2/issue/1133207",
-    "Key": "JIRA1-390",
-    "Status": "In Dev / In Progress",
-    "Desc": "",
-    "ParentID": "1132527",
-    "ParentKey": "JIRA1-375",
-    "ParentLink": "https://jira-site/browse/JIRA1-375",
-    "Type": "Sub-task"
-  },
   "JIRA1-391": {
     "Created": "2020-07-02T05:05:21-04:00",
     "Updated": "2020-08-21T21:39:46-04:00",
@@ -262,7 +247,7 @@
     "Link": "https://jira-site/browse/JIRA1-984",
     "Self": "https://jira-site/rest/api/2/issue/1094223",
     "Key": "JIRA1-984",
-    "Status": "Dependency",
+    "Status": "In QA Review",
     "Desc": "",
     "ParentID": "",
     "ParentKey": "",

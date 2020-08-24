@@ -10,27 +10,10 @@ func Test_printReport(t *testing.T) {
 	var tCards = make([]*trello.Card, 0)
 	mustLoadJSONFile(t, "testdata/trello_cards.json", &tCards)
 
-	tCli := trello.NewTestClient(&trello.Config{
-		UserID: "111111111111111111111111",
-		Lists: &trello.Lists{
-			Todo:   "12345678909876543219d1c9",
-			Doing:  "12345678909876543219d1cb",
-			Done:   "12345678909876543219d1cf",
-			Review: "12345678909876543219d1cc",
-			Bucket: "12345678909876543219d1d0",
-		},
-		Labels: &trello.Labels{
-			Jira:    "121212121212121212121fa4",
-			Blocked: "12121212121212121212d298",
-			Task:    "121212121212121212121795",
-			Bug:     "12121212121212121212de33",
-			Story:   "12121212121212121212a0c8",
-		},
-		Debug: false,
-	})
+	tCli := GetTrelloMockedCli(tCards)
 
 	type args struct {
-		tCli   trello.Connector
+		tCli   TrelloConnector
 		tCards []*trello.Card
 	}
 	tests := []struct {
@@ -46,10 +29,10 @@ func Test_printReport(t *testing.T) {
 			},
 			wantOut: `
 ----------------------------------
+JIRA1-1324 | Test task 1324 - In review
+https://jira.inbcu.com/browse/JIRA1-1324
 JIRA1-1304 | Test task 1304 - In progress
 https://jira.inbcu.com/browse/JIRA1-1304
-JIRA1-1194 | Test task 1194 - In progress
-https://jira.inbcu.com/browse/JIRA1-1194
 JIRA1-1195 | Test task 1195 - In progress
 https://jira.inbcu.com/browse/JIRA1-1195
 JIRA1-1133 | Test task 1133 - In progress
@@ -86,8 +69,8 @@ JIRA1-1289 | Test task 1289 - Done
 https://jira.inbcu.com/browse/JIRA1-1289
 
 ----------------------------------
-In progress: 17
-In review: 0
+In progress: 16
+In review: 1
 Done: 2
 `,
 		},

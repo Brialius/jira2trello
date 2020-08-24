@@ -54,15 +54,7 @@ func TestCard_IsInAnyOfLists(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Card{
-				ID:        tt.fields.ID,
-				Name:      tt.fields.Name,
-				ListID:    tt.fields.ListID,
-				List:      tt.fields.List,
-				Labels:    tt.fields.Labels,
-				Key:       tt.fields.Key,
-				Desc:      tt.fields.Desc,
-				IDLabels:  tt.fields.IDLabels,
-				IDMembers: tt.fields.IDMembers,
+				ListID: tt.fields.ListID,
 			}
 			if got := c.IsInAnyOfLists(tt.args.lists); got != tt.want {
 				t.Errorf("IsInAnyOfLists() = %v, want %v", got, tt.want)

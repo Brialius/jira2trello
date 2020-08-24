@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/Brialius/jira2trello/internal/jira"
+	"github.com/Brialius/jira2trello/internal/trello"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"testing"
@@ -26,13 +27,12 @@ func TestSyncService_printJiraTasks(t *testing.T) {
 			fields: fields{
 				jTasks: jTasks,
 			},
-			wantOut: `Dependency               Story        JIRA1-984      Task name 984      18 May 20     0.0
+			wantOut: `In QA Review             Story        JIRA1-984      Task name 984      18 May 20     0.0
 ToDo                     Sub-task     JIRA1-990      Task name 990      18 May 20     0.0
 ToDo                     Sub-task     JIRA1-991      Task name 991      18 May 20     0.5
 In Dev / In Progress     Sub-task     JIRA1-987      Task name 987      28 May 20     1.0
 In Dev / In Progress     Bug          JIRA1-223      Task name 223      15 Jun 20     1.0
 In Dev / In Progress     Story        JIRA1-375      Task name 375      01 Jul 20     0.0
-In Dev / In Progress     Sub-task     JIRA1-390      Task name 390      02 Jul 20     8.0
 In Dev / In Progress     Sub-task     JIRA1-391      Task name 391      02 Jul 20     10.0
 In Dev / In Progress     Sub-task     JIRA1-392      Task name 392      02 Jul 20     6.0
 In Dev / In Progress     Sub-task     JIRA1-431      Task name 431      08 Jul 20     12.0
@@ -82,4 +82,161 @@ func mustLoadJSONFile(t *testing.T, file string, variable interface{}) []byte {
 	require.NoError(t, err)
 
 	return testFileContent
+}
+
+func TestSyncService_Sync(t *testing.T) {
+	var jTasks = map[string]*jira.Task{}
+	mustLoadJSONFile(t, "testdata/jira_tasks.json", &jTasks)
+
+	tCards := make([]*trello.Card, 0)
+	mustLoadJSONFile(t, "testdata/trello_cards.json", &tCards)
+
+	jCli := GetJiraMockedCli(jTasks)
+	tCli := GetTrelloMockedCli(tCards)
+
+	type fields struct {
+		jCli   JiraConnector
+		tCli   TrelloConnector
+		jTasks map[string]*jira.Task
+		tCards map[string]*trello.Card
+	}
+	tests := []struct {
+		name   string
+		fields fields
+	}{
+		{
+			name: "valid",
+			fields: fields{
+				jCli:   jCli,
+				tCli:   tCli,
+				jTasks: nil,
+				tCards: nil,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &SyncService{
+				jCli:   tt.fields.jCli,
+				tCli:   tt.fields.tCli,
+				jTasks: tt.fields.jTasks,
+				tCards: tt.fields.tCards,
+			}
+			s.Sync()
+
+			require.Equal(t, []struct{ In1, In2 string }{
+				{"098098098098098098098011", "121212121212121212121fa4,12121212121212121212a0c8"}},
+				tCli.UpdateCardLabelsCalls())
+
+			require.Equal(t, []struct{ In1, In2 string }{
+				{"098098098098098098098011", "12345678909876543219d1cc"},
+				{"098098098098098098098018", "12345678909876543219d1cf"},
+			},
+				tCli.MoveCardToListCalls())
+
+			require.Equal(t, []struct{ In1 *trello.Card }{{In1: &trello.Card{
+				Name:      "JIRA1-1194 | Task name 1194",
+				ListID:    "12345678909876543219d1cb",
+				Desc:      "\nJira link: https://jira-site/browse/JIRA1-1194\nType: Bug",
+				IDLabels:  &[]string{"121212121212121212121fa4", "12121212121212121212de33"},
+				IDMembers: "111111111111111111111111",
+			}}}, tCli.CreateCardCalls())
+		})
+	}
+}
+
+func GetJiraMockedCli(jTasks map[string]*jira.Task) *JiraConnectorMock {
+	return &JiraConnectorMock{
+		ConnectFunc: func() error {
+			return nil
+		},
+		GetUserTasksFunc: func() (map[string]*jira.Task, error) {
+			return jTasks, nil
+		},
+	}
+}
+
+func GetTrelloMockedCli(tCards []*trello.Card) *TrelloConnectorMock {
+	return &TrelloConnectorMock{
+		ConnectFunc: func() error {
+			return nil
+		},
+		CreateCardFunc: func(in1 *trello.Card) error {
+			return nil
+		},
+		GetBoardsFunc: func() (map[string]*trello.Board, error) {
+			return map[string]*trello.Board{
+				"Board1": {
+					"https://trello.com/b/0/board1",
+					"Board",
+					"000000000000000000000000",
+				},
+				"Board2": {
+					"https://trello.com/b/1/board2",
+					"Board",
+					"111111111111111111111111",
+				},
+				"Board3": {
+					"https://trello.com/b/2/board3",
+					"Board",
+					"222222222222222222222222",
+				},
+				"Board4": {
+					"https://trello.com/b/3/board4",
+					"Board",
+					"33333333333333333333333",
+				},
+			}, nil
+		},
+		GetConfigFunc: func() *trello.Config {
+			return &trello.Config{
+				UserID: "111111111111111111111111",
+				Lists: &trello.Lists{
+					Todo:   "12345678909876543219d1c9",
+					Doing:  "12345678909876543219d1cb",
+					Done:   "12345678909876543219d1cf",
+					Review: "12345678909876543219d1cc",
+					Bucket: "12345678909876543219d1d0",
+				},
+				Labels: &trello.Labels{
+					Jira:    "121212121212121212121fa4",
+					Blocked: "12121212121212121212d298",
+					Task:    "121212121212121212121795",
+					Bug:     "12121212121212121212de33",
+					Story:   "12121212121212121212a0c8",
+				},
+				Debug: false,
+			}
+		},
+		GetLabelsFunc: func() (map[string]*trello.Label, error) {
+			return map[string]*trello.Label{
+				"Jira":    {"Jira", "121212121212121212121fa4"},
+				"Blocked": {"Blocked", "12121212121212121212d298"},
+				"Task":    {"Task", "121212121212121212121795"},
+				"Bug":     {"Bug", "12121212121212121212de33"},
+				"Story":   {"Story", "12121212121212121212a0c8"},
+			}, nil
+		},
+		GetListsFunc: func() (map[string]*trello.List, error) {
+			return map[string]*trello.List{
+				"Todo":   {"Todo", "12345678909876543219d1c9"},
+				"Doing":  {"Doing", "12345678909876543219d1cb"},
+				"Done":   {"Done", "12345678909876543219d1cf"},
+				"Review": {"Review", "12345678909876543219d1cc"},
+				"Bucket": {"Bucket", "12345678909876543219d1d0"},
+			}, nil
+		},
+		GetUserJiraCardsFunc: func() ([]*trello.Card, error) {
+			return tCards, nil
+		},
+		MoveCardToListFunc: func(in1 string, in2 string) error {
+			return nil
+		},
+		SetBoardFunc: func() error {
+			return nil
+		},
+		UpdateCardLabelsFunc: func(in1 string, in2 string) error {
+			return nil
+		},
+	}
 }
