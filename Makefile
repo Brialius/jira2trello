@@ -1,6 +1,7 @@
 PROJECTNAME=jira2trello
+PACKAGENAME=github.com/Brialius/$(PROJECTNAME)
 VERSION ?= $(shell git describe --tags --always --match=v* || echo v0)
-LDFLAGS=-ldflags "-X=main.version=$(VERSION)"
+LDFLAGS=-ldflags "-X=$(PACKAGENAME)/internal.Version=$(VERSION)"
 LINTERFLAGS=--enable-all --disable gochecknoinits --disable gochecknoglobals --disable goimports --disable gci --disable gofumpt --out-format=tab --tests=false
 BUILDFLAGS=$(LDFLAGS)
 GOEXE := $(shell go env GOEXE)
