@@ -19,15 +19,23 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package main
+package cmd
 
 import (
-	"fmt"
-	"github.com/Brialius/jira2trello/cmd"
-	"github.com/Brialius/jira2trello/internal"
+	"github.com/Brialius/jira2trello/internal/app"
+	"github.com/spf13/cobra"
 )
 
-func main() {
-	fmt.Printf("jira2trello %s\n", internal.Version)
-	cmd.Execute()
+// updateCmd represents the update command.
+var updateCmd = &cobra.Command{
+	Use:   "update",
+	Short: "Update jira2trello",
+	Long:  "Update jira2trello",
+	Run: func(cmd *cobra.Command, args []string) {
+		app.DoSelfUpdate()
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(updateCmd)
 }

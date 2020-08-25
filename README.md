@@ -11,6 +11,7 @@ Usage:
      help        Help about any command
      report      Report based on trello cards
      sync        Jira to Trello sync
+     update      Update jira2trello
    
    Flags:
          --config string   config file (default is $HOME/.jira2trello.yaml)
