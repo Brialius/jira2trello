@@ -30,6 +30,12 @@ import (
 	"sort"
 )
 
+const (
+	orderDone = iota
+	orderDoing
+	orderReview
+)
+
 func Report(tCli TrelloConnector) {
 	if err := tCli.Connect(); err != nil {
 		log.Fatalf("Can't connect to trello: %s", err)
@@ -52,10 +58,11 @@ func printReport(out io.Writer, tCli TrelloConnector, tCards []*trello.Card) {
 
 	sort.Slice(tCards, func(i, j int) bool {
 		l := map[string]int{
-			tCli.GetConfig().Lists.Done:   0,
-			tCli.GetConfig().Lists.Doing:  1,
-			tCli.GetConfig().Lists.Review: 2,
+			tCli.GetConfig().Lists.Done:   orderDone,
+			tCli.GetConfig().Lists.Doing:  orderDoing,
+			tCli.GetConfig().Lists.Review: orderReview,
 		}
+
 		return l[tCards[i].ListID] < l[tCards[j].ListID]
 	})
 
