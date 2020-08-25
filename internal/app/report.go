@@ -30,6 +30,12 @@ import (
 	"sort"
 )
 
+const (
+	orderDone = iota
+	orderDoing
+	orderReview
+)
+
 func Report(tCli TrelloConnector) {
 	if err := tCli.Connect(); err != nil {
 		log.Fatalf("Can't connect to trello: %s", err)
@@ -39,10 +45,6 @@ func Report(tCli TrelloConnector) {
 	if err != nil {
 		log.Fatalf("can't get trello cards: %s", err)
 	}
-
-	sort.Slice(tCards, func(i, j int) bool {
-		return tCards[i].List > tCards[j].List
-	})
 
 	printReport(os.Stdout, tCli, tCards)
 }
@@ -54,21 +56,31 @@ func printReport(out io.Writer, tCli TrelloConnector, tCards []*trello.Card) {
 		inReview   int
 	)
 
+	sort.Slice(tCards, func(i, j int) bool {
+		l := map[string]int{
+			tCli.GetConfig().Lists.Done:   orderDone,
+			tCli.GetConfig().Lists.Doing:  orderDoing,
+			tCli.GetConfig().Lists.Review: orderReview,
+		}
+
+		return l[tCards[i].ListID] < l[tCards[j].ListID]
+	})
+
 	_, _ = fmt.Fprintln(out, "\n----------------------------------")
 
-	for _, tTask := range tCards {
+	for _, tCard := range tCards {
 		switch {
-		case tTask.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Done}):
-			_, _ = fmt.Fprintf(out, "%s - Done\n", tTask.Name)
-			_, _ = fmt.Fprintf(out, "https://jira.inbcu.com/browse/%s\n", tTask.Key)
+		case tCard.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Done}):
+			_, _ = fmt.Fprintf(out, "\n%s - Done\n", tCard.Name)
+			_, _ = fmt.Fprintf(out, "https://jira.inbcu.com/browse/%s\n", tCard.Key)
 			done++
-		case tTask.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Doing}):
-			_, _ = fmt.Fprintf(out, "%s - In progress\n", tTask.Name)
-			_, _ = fmt.Fprintf(out, "https://jira.inbcu.com/browse/%s\n", tTask.Key)
+		case tCard.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Doing}):
+			_, _ = fmt.Fprintf(out, "\n%s - In progress\n", tCard.Name)
+			_, _ = fmt.Fprintf(out, "https://jira.inbcu.com/browse/%s\n", tCard.Key)
 			inProgress++
-		case tTask.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Review}):
-			_, _ = fmt.Fprintf(out, "%s - In review\n", tTask.Name)
-			_, _ = fmt.Fprintf(out, "https://jira.inbcu.com/browse/%s\n", tTask.Key)
+		case tCard.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Review}):
+			_, _ = fmt.Fprintf(out, "\n%s - In review\n", tCard.Name)
+			_, _ = fmt.Fprintf(out, "https://jira.inbcu.com/browse/%s\n", tCard.Key)
 			inReview++
 		}
 	}

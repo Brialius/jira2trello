@@ -65,7 +65,9 @@ func (s *SyncService) Sync() {
 		log.Fatalf("can't get jira tasks: %s", err)
 	}
 
+	fmt.Println()
 	s.printJiraTasks(os.Stdout)
+	fmt.Println()
 
 	if s.tCards, err = getTrelloCards(s.tCli); err != nil {
 		log.Fatalf("can't get trello cards: %s", err)
