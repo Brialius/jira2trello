@@ -94,8 +94,8 @@ func printReport(out io.Writer, tCli TrelloConnector, tCards []*trello.Card) {
 }
 
 func printReportCard(out io.Writer, tCard *trello.Card, status string) {
-	httpPrefix := internal.Blue + "https://jira.inbcu.com/browse/" + internal.ColorOff
+	httpPrefix := internal.Blue + "https://jira.inbcu.com/browse/"
 
 	_, _ = fmt.Fprintf(out, "\n%s - %s\n", tCard.Name, status)
-	_, _ = fmt.Fprintln(out, httpPrefix+tCard.Key)
+	_, _ = fmt.Fprintln(out, httpPrefix+tCard.Key+internal.ColorOff)
 }
