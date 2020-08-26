@@ -1,14 +1,13 @@
 PROJECTNAME=jira2trello
-PACKAGENAME=github.com/Brialius/$(PROJECTNAME)
+MODULE=github.com/Brialius/$(PROJECTNAME)
 VERSION ?= $(shell git describe --tags --always --match=v* || echo v0)
-LDFLAGS=-ldflags "-X=$(PACKAGENAME)/internal.Version=$(VERSION)"
+LDFLAGS=-ldflags "-X=$(MODULE)/internal.Version=$(VERSION)"
 LINTERFLAGS=--enable-all --disable gochecknoinits --disable gochecknoglobals --disable goimports --disable gci --disable gofumpt --out-format=tab --tests=false
 BUILDFLAGS=$(LDFLAGS)
 GOEXE := $(shell go env GOEXE)
 GOPATH := $(shell go env GOPATH)
 GOOS := $(shell go env GOOS)
 BIN=bin/$(PROJECTNAME)$(GOEXE)
-MODULE=github.com/Brialius/$(PROJECTNAME)
 LINT_PATH := ./bin/golangci-lint
 LINT_PATH_WIN := golangci-lint
 LINT_SETUP := curl -sfL "https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh" | sh -s latest
