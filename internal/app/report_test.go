@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"github.com/Brialius/jira2trello/internal/trello"
+	"github.com/mattn/go-colorable"
 	"testing"
 )
 
@@ -112,7 +113,7 @@ Done: 0
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out := &bytes.Buffer{}
-			printReport(out, tt.args.tCli, tt.args.tCards)
+			printReport(colorable.NewNonColorable(out), tt.args.tCli, tt.args.tCards)
 			if gotOut := out.String(); gotOut != tt.wantOut {
 				t.Errorf("printReport() = %v, want %v", gotOut, tt.wantOut)
 			}

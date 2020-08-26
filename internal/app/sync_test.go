@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/Brialius/jira2trello/internal/jira"
 	"github.com/Brialius/jira2trello/internal/trello"
+	"github.com/mattn/go-colorable"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"testing"
@@ -63,7 +64,7 @@ ToDo                     Sub-task     JIRA1-1324     Task name 1324     21 Aug 2
 				jTasks: tt.fields.jTasks,
 			}
 			out := &bytes.Buffer{}
-			s.printJiraTasks(out)
+			s.printJiraTasks(colorable.NewNonColorable(out))
 			if gotOut := out.String(); gotOut != tt.wantOut {
 				t.Errorf("printJiraTasks() = %v, want %v", gotOut, tt.wantOut)
 			}
