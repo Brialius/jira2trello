@@ -20,6 +20,9 @@ Usage:
    
    Use "jira2trello [command] --help" for more information about a command.   
 ```
+## Screenshots
+#### Sync command
+![image](https://user-images.githubusercontent.com/6441812/91293559-df93a400-e7a0-11ea-9a41-8ba0207c08c1.png)
 
 ## Build
 ### make goals
