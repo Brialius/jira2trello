@@ -37,7 +37,7 @@ const (
 	orderReview
 )
 
-func Report(tCli TrelloConnector) {
+func Report(tCli TrelloConnector, jiraURL string) {
 	if err := tCli.Connect(); err != nil {
 		log.Fatalf("Can't connect to trello: %s", err)
 	}
@@ -47,10 +47,10 @@ func Report(tCli TrelloConnector) {
 		log.Fatalf("can't get trello cards: %s", err)
 	}
 
-	printReport(colorable.NewColorableStdout(), tCli, tCards)
+	printReport(colorable.NewColorableStdout(), tCli, tCards, jiraURL)
 }
 
-func printReport(out io.Writer, tCli TrelloConnector, tCards []*trello.Card) {
+func printReport(out io.Writer, tCli TrelloConnector, tCards []*trello.Card, jiraURL string) {
 	var (
 		done       int
 		inProgress int
@@ -76,13 +76,13 @@ func printReport(out io.Writer, tCli TrelloConnector, tCards []*trello.Card) {
 	for _, tCard := range tCards {
 		switch {
 		case tCard.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Done}):
-			printReportCard(out, tCard, doneString)
+			printReportCard(out, tCard, doneString, jiraURL)
 			done++
 		case tCard.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Doing}):
-			printReportCard(out, tCard, doingString)
+			printReportCard(out, tCard, doingString, jiraURL)
 			inProgress++
 		case tCard.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Review}):
-			printReportCard(out, tCard, reviewString)
+			printReportCard(out, tCard, reviewString, jiraURL)
 			inReview++
 		}
 	}
@@ -93,8 +93,8 @@ func printReport(out io.Writer, tCli TrelloConnector, tCards []*trello.Card) {
 	_, _ = fmt.Fprintln(out, doneString+":", done)
 }
 
-func printReportCard(out io.Writer, tCard *trello.Card, status string) {
-	httpPrefix := internal.Blue + "https://jira.inbcu.com/browse/"
+func printReportCard(out io.Writer, tCard *trello.Card, status string, jiraURL string) {
+	httpPrefix := internal.Blue + jiraURL + "/browse/"
 
 	_, _ = fmt.Fprintf(out, "\n%s - %s\n", tCard.Name, status)
 	_, _ = fmt.Fprintln(out, httpPrefix+tCard.Key+internal.ColorOff)
