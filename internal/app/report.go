@@ -23,10 +23,11 @@ package app
 
 import (
 	"fmt"
+	"github.com/Brialius/jira2trello/internal"
 	"github.com/Brialius/jira2trello/internal/trello"
+	"github.com/mattn/go-colorable"
 	"io"
 	"log"
-	"os"
 	"sort"
 )
 
@@ -46,7 +47,7 @@ func Report(tCli TrelloConnector) {
 		log.Fatalf("can't get trello cards: %s", err)
 	}
 
-	printReport(os.Stdout, tCli, tCards)
+	printReport(colorable.NewColorableStdout(), tCli, tCards)
 }
 
 func printReport(out io.Writer, tCli TrelloConnector, tCards []*trello.Card) {
@@ -68,25 +69,33 @@ func printReport(out io.Writer, tCli TrelloConnector, tCards []*trello.Card) {
 
 	_, _ = fmt.Fprintln(out, "\n----------------------------------")
 
+	doneString := internal.Green + "Done" + internal.ColorOff
+	doingString := internal.Yellow + "In progress" + internal.ColorOff
+	reviewString := internal.Cyan + "In review" + internal.ColorOff
+
 	for _, tCard := range tCards {
 		switch {
 		case tCard.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Done}):
-			_, _ = fmt.Fprintf(out, "\n%s - Done\n", tCard.Name)
-			_, _ = fmt.Fprintf(out, "https://jira.inbcu.com/browse/%s\n", tCard.Key)
+			printReportCard(out, tCard, doneString)
 			done++
 		case tCard.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Doing}):
-			_, _ = fmt.Fprintf(out, "\n%s - In progress\n", tCard.Name)
-			_, _ = fmt.Fprintf(out, "https://jira.inbcu.com/browse/%s\n", tCard.Key)
+			printReportCard(out, tCard, doingString)
 			inProgress++
 		case tCard.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Review}):
-			_, _ = fmt.Fprintf(out, "\n%s - In review\n", tCard.Name)
-			_, _ = fmt.Fprintf(out, "https://jira.inbcu.com/browse/%s\n", tCard.Key)
+			printReportCard(out, tCard, reviewString)
 			inReview++
 		}
 	}
 
 	_, _ = fmt.Fprintln(out, "\n----------------------------------")
-	_, _ = fmt.Fprintf(out, "In progress: %d\n", inProgress)
-	_, _ = fmt.Fprintf(out, "In review: %d\n", inReview)
-	_, _ = fmt.Fprintf(out, "Done: %d\n", done)
+	_, _ = fmt.Fprintln(out, doingString+":", inProgress)
+	_, _ = fmt.Fprintln(out, reviewString+":", inReview)
+	_, _ = fmt.Fprintln(out, doneString+":", done)
+}
+
+func printReportCard(out io.Writer, tCard *trello.Card, status string) {
+	httpPrefix := internal.Blue + "https://jira.inbcu.com/browse/" + internal.ColorOff
+
+	_, _ = fmt.Fprintf(out, "\n%s - %s\n", tCard.Name, status)
+	_, _ = fmt.Fprintln(out, httpPrefix+tCard.Key)
 }

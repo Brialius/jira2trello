@@ -25,9 +25,9 @@ import (
 	"fmt"
 	"github.com/Brialius/jira2trello/internal/jira"
 	"github.com/Brialius/jira2trello/internal/trello"
+	"github.com/mattn/go-colorable"
 	"io"
 	"log"
-	"os"
 	"reflect"
 	"sort"
 	"strings"
@@ -66,7 +66,7 @@ func (s *SyncService) Sync() {
 	}
 
 	fmt.Println()
-	s.printJiraTasks(os.Stdout)
+	s.printJiraTasks(colorable.NewColorableStdout())
 	fmt.Println()
 
 	if s.tCards, err = getTrelloCards(s.tCli); err != nil {

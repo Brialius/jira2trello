@@ -2,6 +2,7 @@ package jira
 
 import (
 	"fmt"
+	"github.com/Brialius/jira2trello/internal"
 	"time"
 )
 
@@ -27,6 +28,29 @@ func (j Task) String() string {
 }
 
 func (j Task) TabString() string {
+	jStatus := j.Status
+	jType := j.Type
+
+	switch jStatus {
+	case "Dependency", "Blocked":
+		jStatus = internal.Red + jStatus + internal.ColorOff
+	case "ToDo":
+		jStatus = internal.Blue + jStatus + internal.ColorOff
+	case "In QA Review":
+		jStatus = internal.Cyan + jStatus + internal.ColorOff
+	default:
+		jStatus = internal.Yellow + jStatus + internal.ColorOff
+	}
+
+	switch jType {
+	case "Story", "User Story":
+		jType = internal.Green + jType + internal.ColorOff
+	case "Bug":
+		jType = internal.Red + jType + internal.ColorOff
+	default:
+		jType = internal.Blue + jType + internal.ColorOff
+	}
+
 	return fmt.Sprintf("%s \t%s \t%s \t%.70s \t%.9s \t%0.1f",
-		j.Status, j.Type, j.Key, j.Summary, j.Created.Format(time.RFC822), j.TimeSpent.Hours())
+		jStatus, jType, j.Key, j.Summary, j.Created.Format(time.RFC822), j.TimeSpent.Hours())
 }
