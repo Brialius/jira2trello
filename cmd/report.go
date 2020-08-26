@@ -43,7 +43,7 @@ var reportCmd = &cobra.Command{
 
 		tCfg.Debug = Debug
 
-		app.Report(trello.NewClient(&tCfg))
+		app.Report(trello.NewClient(&tCfg), viper.GetString("jira.url"))
 	},
 }
 
