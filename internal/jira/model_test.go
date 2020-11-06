@@ -33,7 +33,7 @@ func TestTask_String(t *testing.T) {
 				Updated:   time.Date(2020, 1, 1, 1, 1, 1, 1, time.UTC),
 				TimeSpent: 36000000000000,
 				Summary:   "Test task 132",
-				Link:      "https://jira.inbcu.com/browse/JIRA1-132",
+				Link:      "https://jira-site/browse/JIRA1-132",
 				Key:       "JIRA1-132",
 				Status:    "In review",
 				Type:      "Task",
