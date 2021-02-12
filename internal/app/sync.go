@@ -59,11 +59,13 @@ func (s *SyncService) Sync() {
 		log.Fatalf("Can't connect to trello: %s", err)
 	}
 
-	fmt.Println("Getting Jira tasks...")
+	fmt.Print("Getting Jira tasks... ")
 
 	if s.jTasks, err = s.jCli.GetUserTasks(); err != nil {
 		log.Fatalf("can't get jira tasks: %s", err)
 	}
+
+	fmt.Printf("found %d\n", len(s.jTasks))
 
 	fmt.Println()
 	s.printJiraTasks(colorable.NewColorableStdout())
@@ -199,7 +201,7 @@ func (s *SyncService) addCardToList(task *jira.Task, listID string, key string, 
 }
 
 func getTrelloCards(tCli TrelloConnector) (map[string]*trello.Card, error) {
-	fmt.Println("Getting Trello cards...")
+	fmt.Print("Getting Trello cards... ")
 
 	tCards := map[string]*trello.Card{}
 
@@ -207,6 +209,8 @@ func getTrelloCards(tCli TrelloConnector) (map[string]*trello.Card, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Printf("found %d\n", len(cards))
 
 	for _, card := range cards {
 		tCards[card.Key] = card
