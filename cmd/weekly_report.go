@@ -24,35 +24,32 @@ package cmd
 import (
 	"github.com/Brialius/jira2trello/internal/app"
 	"github.com/Brialius/jira2trello/internal/jira"
-	"github.com/Brialius/jira2trello/internal/trello"
 	"github.com/spf13/viper"
 	"log"
 
 	"github.com/spf13/cobra"
 )
 
-// syncCmd represents the sync command.
-var syncCmd = &cobra.Command{
-	Use:   "sync",
-	Short: "Jira to Trello sync",
-	Long:  `Jira to Trello sync`,
+// weeklyReportCmd represents the weekly-report command.
+var weeklyReportCmd = &cobra.Command{
+	Use:   "weekly-report",
+	Short: "Weekly report based on jira query",
+	Long:  "Get `Closed` or `In progress` stories and jira tasks with non zero `timespent` for last 7 days",
+	Aliases: []string{
+		"weekly",
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		var jCfg jira.Config
 		if err := viper.UnmarshalKey("jira", &jCfg); err != nil {
 			log.Fatalf("Can't parse Jira config: %s", err)
 		}
 
-		var tCfg trello.Config
-		if err := viper.UnmarshalKey("trello", &tCfg); err != nil {
-			log.Fatalf("Can't parse Trello config: %s", err)
-		}
+		jCfg.Debug = Debug
 
-		tCfg.Debug, jCfg.Debug = Debug, Debug
-
-		app.NewSyncService(jira.NewClient(&jCfg), trello.NewClient(&tCfg)).Sync()
+		app.WeeklyReport(jira.NewClient(&jCfg))
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(syncCmd)
+	rootCmd.AddCommand(weeklyReportCmd)
 }

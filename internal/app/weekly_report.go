@@ -19,40 +19,23 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package cmd
+package app
 
 import (
-	"github.com/Brialius/jira2trello/internal/app"
-	"github.com/Brialius/jira2trello/internal/jira"
-	"github.com/Brialius/jira2trello/internal/trello"
-	"github.com/spf13/viper"
+	"github.com/mattn/go-colorable"
 	"log"
-
-	"github.com/spf13/cobra"
 )
 
-// syncCmd represents the sync command.
-var syncCmd = &cobra.Command{
-	Use:   "sync",
-	Short: "Jira to Trello sync",
-	Long:  `Jira to Trello sync`,
-	Run: func(cmd *cobra.Command, args []string) {
-		var jCfg jira.Config
-		if err := viper.UnmarshalKey("jira", &jCfg); err != nil {
-			log.Fatalf("Can't parse Jira config: %s", err)
-		}
+func WeeklyReport(jCli JiraConnector) {
+	if err := jCli.Connect(); err != nil {
+		log.Fatalf("Can't connect to jira server: %s", err)
+	}
 
-		var tCfg trello.Config
-		if err := viper.UnmarshalKey("trello", &tCfg); err != nil {
-			log.Fatalf("Can't parse Trello config: %s", err)
-		}
+	tasks, err := jCli.GetUserTasks("(status changed to closed after -7d  OR status = \"In Dev / In Progress\") " +
+		"AND (timespent != 0 OR issuetype = Story) ORDER BY priority DESC, updated DESC")
+	if err != nil {
+		log.Fatalf("Can't get jira tasks: %s", err)
+	}
 
-		tCfg.Debug, jCfg.Debug = Debug, Debug
-
-		app.NewSyncService(jira.NewClient(&jCfg), trello.NewClient(&tCfg)).Sync()
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(syncCmd)
+	printJiraTasks(colorable.NewColorableStdout(), tasks)
 }

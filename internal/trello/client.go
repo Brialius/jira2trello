@@ -55,6 +55,7 @@ func (t *Client) GetBoards() (map[string]*Board, error) {
 	boards, err := t.cli.GetMyBoards(trello.Defaults())
 
 	if err != nil {
+		// todo: error returned from external package is unwrapped
 		return nil, err
 	}
 

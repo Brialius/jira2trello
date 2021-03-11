@@ -19,40 +19,34 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package cmd
+package app
 
 import (
-	"github.com/Brialius/jira2trello/internal/app"
+	"fmt"
 	"github.com/Brialius/jira2trello/internal/jira"
-	"github.com/Brialius/jira2trello/internal/trello"
-	"github.com/spf13/viper"
-	"log"
-
-	"github.com/spf13/cobra"
+	"io"
+	"sort"
+	"text/tabwriter"
 )
 
-// syncCmd represents the sync command.
-var syncCmd = &cobra.Command{
-	Use:   "sync",
-	Short: "Jira to Trello sync",
-	Long:  `Jira to Trello sync`,
-	Run: func(cmd *cobra.Command, args []string) {
-		var jCfg jira.Config
-		if err := viper.UnmarshalKey("jira", &jCfg); err != nil {
-			log.Fatalf("Can't parse Jira config: %s", err)
-		}
+func printJiraTasks(out io.Writer, jTasks map[string]*jira.Task) {
+	w := new(tabwriter.Writer)
 
-		var tCfg trello.Config
-		if err := viper.UnmarshalKey("trello", &tCfg); err != nil {
-			log.Fatalf("Can't parse Trello config: %s", err)
-		}
+	w.Init(out, 0, 0, 4, ' ', tabwriter.FilterHTML+tabwriter.StripEscape)
 
-		tCfg.Debug, jCfg.Debug = Debug, Debug
+	list := make([]*jira.Task, 0, len(jTasks))
 
-		app.NewSyncService(jira.NewClient(&jCfg), trello.NewClient(&tCfg)).Sync()
-	},
-}
+	for _, task := range jTasks {
+		list = append(list, task)
+	}
 
-func init() {
-	rootCmd.AddCommand(syncCmd)
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].Created.Before(list[j].Created)
+	})
+
+	for _, task := range list {
+		_, _ = fmt.Fprintln(w, task.TabString())
+	}
+
+	_ = w.Flush()
 }

@@ -1,5 +1,5 @@
 /*
-Copyright © 2019 Denis Belyatsky <denis.bel@gmail.com>
+Copyright © 2021 Denis Belyatsky <denis.bel@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@ type Client struct {
 	cli *jira.Client
 }
 
-func NewServer(cfg *Config) *Client {
+func NewClient(cfg *Config) *Client {
 	return &Client{
 		Config: cfg,
 	}
@@ -48,6 +48,7 @@ func (j *Client) Connect() error {
 
 	client, err := jira.NewClient(tp.Client(), j.URL)
 	if err != nil {
+		// todo: error returned from external package is unwrapped
 		return err
 	}
 
@@ -56,12 +57,12 @@ func (j *Client) Connect() error {
 	return nil
 }
 
-func (j *Client) GetUserTasks() (map[string]*Task, error) {
+func (j *Client) GetUserTasks(jql string) (map[string]*Task, error) {
 	res := map[string]*Task{}
-	issues, _, err := j.cli.Issue.Search("assignee = '"+j.User+"' AND status not in "+
-		"(done, closed, close, resolved) ORDER BY priority DESC, updated DESC", nil)
+	issues, _, err := j.cli.Issue.Search("assignee = currentUser() AND "+jql, nil)
 
 	if err != nil {
+		// todo: error returned from external package is unwrapped
 		return nil, err
 	}
 

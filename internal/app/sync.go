@@ -1,5 +1,5 @@
 /*
-Copyright © 2019 Denis Belyatsky <denis.bel@gmail.com>
+Copyright © 2021 Denis Belyatsky <denis.bel@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,12 +26,9 @@ import (
 	"github.com/Brialius/jira2trello/internal/jira"
 	"github.com/Brialius/jira2trello/internal/trello"
 	"github.com/mattn/go-colorable"
-	"io"
 	"log"
 	"reflect"
-	"sort"
 	"strings"
-	"text/tabwriter"
 )
 
 type SyncService struct {
@@ -41,7 +38,7 @@ type SyncService struct {
 	tCards map[string]*trello.Card
 }
 
-func NewSyncService(jCli JiraConnector, tCli TrelloConnector) *SyncService {
+func NewSyncService(jCli *jira.Client, tCli TrelloConnector) *SyncService {
 	return &SyncService{
 		jCli: jCli,
 		tCli: tCli,
@@ -61,14 +58,15 @@ func (s *SyncService) Sync() {
 
 	fmt.Print("Getting Jira tasks... ")
 
-	if s.jTasks, err = s.jCli.GetUserTasks(); err != nil {
+	if s.jTasks, err = s.jCli.GetUserTasks("status not in (done, closed, close, resolved) " +
+		"ORDER BY priority DESC, updated DESC"); err != nil {
 		log.Fatalf("can't get jira tasks: %s", err)
 	}
 
 	fmt.Printf("found %d\n", len(s.jTasks))
 
 	fmt.Println()
-	s.printJiraTasks(colorable.NewColorableStdout())
+	printJiraTasks(colorable.NewColorableStdout(), s.jTasks)
 	fmt.Println()
 
 	if s.tCards, err = getTrelloCards(s.tCli); err != nil {
@@ -207,6 +205,7 @@ func getTrelloCards(tCli TrelloConnector) (map[string]*trello.Card, error) {
 
 	cards, err := tCli.GetUserJiraCards()
 	if err != nil {
+		// todo: error returned from interface method should be wrapped
 		return nil, err
 	}
 
@@ -217,26 +216,4 @@ func getTrelloCards(tCli TrelloConnector) (map[string]*trello.Card, error) {
 	}
 
 	return tCards, nil
-}
-
-func (s *SyncService) printJiraTasks(out io.Writer) {
-	w := new(tabwriter.Writer)
-
-	w.Init(out, 0, 0, 4, ' ', tabwriter.FilterHTML+tabwriter.StripEscape)
-
-	list := make([]*jira.Task, 0, len(s.jTasks))
-
-	for _, task := range s.jTasks {
-		list = append(list, task)
-	}
-
-	sort.Slice(list, func(i, j int) bool {
-		return list[i].Created.Before(list[j].Created)
-	})
-
-	for _, task := range list {
-		_, _ = fmt.Fprintln(w, task.TabString())
-	}
-
-	_ = w.Flush()
 }
