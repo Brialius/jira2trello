@@ -34,7 +34,7 @@ type Client struct {
 	cli *jira.Client
 }
 
-func NewServer(cfg *Config) *Client {
+func NewClient(cfg *Config) *Client {
 	return &Client{
 		Config: cfg,
 	}

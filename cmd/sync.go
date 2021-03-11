@@ -49,7 +49,7 @@ var syncCmd = &cobra.Command{
 
 		tCfg.Debug, jCfg.Debug = Debug, Debug
 
-		app.NewSyncService(jira.NewServer(&jCfg), trello.NewClient(&tCfg)).Sync()
+		app.NewSyncService(jira.NewClient(&jCfg), trello.NewClient(&tCfg)).Sync()
 	},
 }
 
