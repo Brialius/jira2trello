@@ -7,11 +7,12 @@ Usage:
      jira2trello [command]
    
    Available Commands:
-     configure   Ask configuration settings and save them to file
-     help        Help about any command
-     report      Report based on trello cards
-     sync        Jira to Trello sync
-     update      Update jira2trello
+     configure     Ask configuration settings and save them to file
+     help          Help about any command
+     report        Report based on trello cards
+     sync          Jira to Trello sync
+     update        Update jira2trello
+     weekly-report Weekly report based on jira query
    
    Flags:
          --config string   config file (default is $HOME/.jira2trello.yaml)
