@@ -85,7 +85,7 @@ ToDo                     Sub-task     JIRA1-1324     Task name 1324     21 Aug 2
 				jTasks: tt.fields.jTasks,
 			}
 			out := &bytes.Buffer{}
-			s.printJiraTasks(colorable.NewNonColorable(out))
+			printJiraTasks(colorable.NewNonColorable(out), s.jTasks)
 			if gotOut := out.String(); gotOut != tt.wantOut {
 				t.Errorf("printJiraTasks() = %v, want %v", gotOut, tt.wantOut)
 			}

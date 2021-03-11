@@ -26,12 +26,9 @@ import (
 	"github.com/Brialius/jira2trello/internal/jira"
 	"github.com/Brialius/jira2trello/internal/trello"
 	"github.com/mattn/go-colorable"
-	"io"
 	"log"
 	"reflect"
-	"sort"
 	"strings"
-	"text/tabwriter"
 )
 
 type SyncService struct {
@@ -69,7 +66,7 @@ func (s *SyncService) Sync() {
 	fmt.Printf("found %d\n", len(s.jTasks))
 
 	fmt.Println()
-	s.printJiraTasks(colorable.NewColorableStdout())
+	printJiraTasks(colorable.NewColorableStdout(), s.jTasks)
 	fmt.Println()
 
 	if s.tCards, err = getTrelloCards(s.tCli); err != nil {
@@ -218,26 +215,4 @@ func getTrelloCards(tCli TrelloConnector) (map[string]*trello.Card, error) {
 	}
 
 	return tCards, nil
-}
-
-func (s *SyncService) printJiraTasks(out io.Writer) {
-	w := new(tabwriter.Writer)
-
-	w.Init(out, 0, 0, 4, ' ', tabwriter.FilterHTML+tabwriter.StripEscape)
-
-	list := make([]*jira.Task, 0, len(s.jTasks))
-
-	for _, task := range s.jTasks {
-		list = append(list, task)
-	}
-
-	sort.Slice(list, func(i, j int) bool {
-		return list[i].Created.Before(list[j].Created)
-	})
-
-	for _, task := range list {
-		_, _ = fmt.Fprintln(w, task.TabString())
-	}
-
-	_ = w.Flush()
 }
