@@ -58,7 +58,7 @@ func (j *Client) Connect() error {
 
 func (j *Client) GetUserTasks(jql string) (map[string]*Task, error) {
 	res := map[string]*Task{}
-	issues, _, err := j.cli.Issue.Search("assignee = '"+j.User+"' AND "+jql, nil)
+	issues, _, err := j.cli.Issue.Search("assignee = currentUser() AND "+jql, nil)
 
 	if err != nil {
 		return nil, err
