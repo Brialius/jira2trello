@@ -1,3 +1,24 @@
+/*
+Copyright © 2021 Denis Belyatsky <denis.bel@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
 package app
 
 import (
@@ -125,17 +146,17 @@ func TestSyncService_Sync(t *testing.T) {
 			}
 			s.Sync()
 
-			require.Equal(t, []struct{ In1, In2 string }{
+			require.Equal(t, []struct{ S1, S2 string }{
 				{"098098098098098098098011", "121212121212121212121fa4,12121212121212121212a0c8"}},
 				tCli.UpdateCardLabelsCalls())
 
-			require.Equal(t, []struct{ In1, In2 string }{
+			require.Equal(t, []struct{ S1, S2 string }{
 				{"098098098098098098098011", "12345678909876543219d1cc"},
 				{"098098098098098098098018", "12345678909876543219d1cf"},
 			},
 				tCli.MoveCardToListCalls())
 
-			require.Equal(t, []struct{ In1 *trello.Card }{{In1: &trello.Card{
+			require.Equal(t, []struct{ Card *trello.Card }{{Card: &trello.Card{
 				Name:      "JIRA1-1194 | Task name 1194",
 				ListID:    "12345678909876543219d1cb",
 				Desc:      "\nJira link: https://jira-site/browse/JIRA1-1194\nType: Bug",
@@ -151,7 +172,7 @@ func GetJiraMockedCli(jTasks map[string]*jira.Task) *JiraConnectorMock {
 		ConnectFunc: func() error {
 			return nil
 		},
-		GetUserTasksFunc: func() (map[string]*jira.Task, error) {
+		GetUserTasksFunc: func(jql string) (map[string]*jira.Task, error) {
 			return jTasks, nil
 		},
 	}

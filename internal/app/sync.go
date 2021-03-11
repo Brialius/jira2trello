@@ -41,7 +41,7 @@ type SyncService struct {
 	tCards map[string]*trello.Card
 }
 
-func NewSyncService(jCli JiraConnector, tCli TrelloConnector) *SyncService {
+func NewSyncService(jCli *jira.Client, tCli TrelloConnector) *SyncService {
 	return &SyncService{
 		jCli: jCli,
 		tCli: tCli,
@@ -61,7 +61,8 @@ func (s *SyncService) Sync() {
 
 	fmt.Print("Getting Jira tasks... ")
 
-	if s.jTasks, err = s.jCli.GetUserTasks(); err != nil {
+	if s.jTasks, err = s.jCli.GetUserTasks("status not in (done, closed, close, resolved) " +
+		"ORDER BY priority DESC, updated DESC"); err != nil {
 		log.Fatalf("can't get jira tasks: %s", err)
 	}
 

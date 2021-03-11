@@ -27,5 +27,5 @@ import "github.com/Brialius/jira2trello/internal/jira"
 
 type JiraConnector interface {
 	Connect() error
-	GetUserTasks() (map[string]*jira.Task, error)
+	GetUserTasks(jql string) (map[string]*jira.Task, error)
 }

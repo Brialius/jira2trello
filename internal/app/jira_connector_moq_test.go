@@ -14,28 +14,28 @@ var _ JiraConnector = &JiraConnectorMock{}
 
 // JiraConnectorMock is a mock implementation of JiraConnector.
 //
-//     func TestSomethingThatUsesJiraConnector(t *testing.T) {
+// 	func TestSomethingThatUsesJiraConnector(t *testing.T) {
 //
-//         // make and configure a mocked JiraConnector
-//         mockedJiraConnector := &JiraConnectorMock{
-//             ConnectFunc: func() error {
-// 	               panic("mock out the Connect method")
-//             },
-//             GetUserTasksFunc: func() (map[string]*jira.Task, error) {
-// 	               panic("mock out the GetUserTasks method")
-//             },
-//         }
+// 		// make and configure a mocked JiraConnector
+// 		mockedJiraConnector := &JiraConnectorMock{
+// 			ConnectFunc: func() error {
+// 				panic("mock out the Connect method")
+// 			},
+// 			GetUserTasksFunc: func(jql string) (map[string]*jira.Task, error) {
+// 				panic("mock out the GetUserTasks method")
+// 			},
+// 		}
 //
-//         // use mockedJiraConnector in code that requires JiraConnector
-//         // and then make assertions.
+// 		// use mockedJiraConnector in code that requires JiraConnector
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type JiraConnectorMock struct {
 	// ConnectFunc mocks the Connect method.
 	ConnectFunc func() error
 
 	// GetUserTasksFunc mocks the GetUserTasks method.
-	GetUserTasksFunc func() (map[string]*jira.Task, error)
+	GetUserTasksFunc func(jql string) (map[string]*jira.Task, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -44,6 +44,8 @@ type JiraConnectorMock struct {
 		}
 		// GetUserTasks holds details about calls to the GetUserTasks method.
 		GetUserTasks []struct {
+			// Jql is the jql argument value.
+			Jql string
 		}
 	}
 	lockConnect      sync.RWMutex
@@ -77,24 +79,29 @@ func (mock *JiraConnectorMock) ConnectCalls() []struct {
 }
 
 // GetUserTasks calls GetUserTasksFunc.
-func (mock *JiraConnectorMock) GetUserTasks() (map[string]*jira.Task, error) {
+func (mock *JiraConnectorMock) GetUserTasks(jql string) (map[string]*jira.Task, error) {
 	if mock.GetUserTasksFunc == nil {
 		panic("JiraConnectorMock.GetUserTasksFunc: method is nil but JiraConnector.GetUserTasks was just called")
 	}
 	callInfo := struct {
-	}{}
+		Jql string
+	}{
+		Jql: jql,
+	}
 	mock.lockGetUserTasks.Lock()
 	mock.calls.GetUserTasks = append(mock.calls.GetUserTasks, callInfo)
 	mock.lockGetUserTasks.Unlock()
-	return mock.GetUserTasksFunc()
+	return mock.GetUserTasksFunc(jql)
 }
 
 // GetUserTasksCalls gets all the calls that were made to GetUserTasks.
 // Check the length with:
 //     len(mockedJiraConnector.GetUserTasksCalls())
 func (mock *JiraConnectorMock) GetUserTasksCalls() []struct {
+	Jql string
 } {
 	var calls []struct {
+		Jql string
 	}
 	mock.lockGetUserTasks.RLock()
 	calls = mock.calls.GetUserTasks

@@ -56,10 +56,9 @@ func (j *Client) Connect() error {
 	return nil
 }
 
-func (j *Client) GetUserTasks() (map[string]*Task, error) {
+func (j *Client) GetUserTasks(jql string) (map[string]*Task, error) {
 	res := map[string]*Task{}
-	issues, _, err := j.cli.Issue.Search("assignee = '"+j.User+"' AND status not in "+
-		"(done, closed, close, resolved) ORDER BY priority DESC, updated DESC", nil)
+	issues, _, err := j.cli.Issue.Search("assignee = '"+j.User+"' AND "+jql, nil)
 
 	if err != nil {
 		return nil, err

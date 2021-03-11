@@ -14,52 +14,52 @@ var _ TrelloConnector = &TrelloConnectorMock{}
 
 // TrelloConnectorMock is a mock implementation of TrelloConnector.
 //
-//     func TestSomethingThatUsesTrelloConnector(t *testing.T) {
+// 	func TestSomethingThatUsesTrelloConnector(t *testing.T) {
 //
-//         // make and configure a mocked TrelloConnector
-//         mockedTrelloConnector := &TrelloConnectorMock{
-//             ConnectFunc: func() error {
-// 	               panic("mock out the Connect method")
-//             },
-//             CreateCardFunc: func(in1 *trello.Card) error {
-// 	               panic("mock out the CreateCard method")
-//             },
-//             GetBoardsFunc: func() (map[string]*trello.Board, error) {
-// 	               panic("mock out the GetBoards method")
-//             },
-//             GetConfigFunc: func() *trello.Config {
-// 	               panic("mock out the GetConfig method")
-//             },
-//             GetLabelsFunc: func() (map[string]*trello.Label, error) {
-// 	               panic("mock out the GetLabels method")
-//             },
-//             GetListsFunc: func() (map[string]*trello.List, error) {
-// 	               panic("mock out the GetLists method")
-//             },
-//             GetUserJiraCardsFunc: func() ([]*trello.Card, error) {
-// 	               panic("mock out the GetUserJiraCards method")
-//             },
-//             MoveCardToListFunc: func(in1 string, in2 string) error {
-// 	               panic("mock out the MoveCardToList method")
-//             },
-//             SetBoardFunc: func() error {
-// 	               panic("mock out the SetBoard method")
-//             },
-//             UpdateCardLabelsFunc: func(in1 string, in2 string) error {
-// 	               panic("mock out the UpdateCardLabels method")
-//             },
-//         }
+// 		// make and configure a mocked TrelloConnector
+// 		mockedTrelloConnector := &TrelloConnectorMock{
+// 			ConnectFunc: func() error {
+// 				panic("mock out the Connect method")
+// 			},
+// 			CreateCardFunc: func(card *trello.Card) error {
+// 				panic("mock out the CreateCard method")
+// 			},
+// 			GetBoardsFunc: func() (map[string]*trello.Board, error) {
+// 				panic("mock out the GetBoards method")
+// 			},
+// 			GetConfigFunc: func() *trello.Config {
+// 				panic("mock out the GetConfig method")
+// 			},
+// 			GetLabelsFunc: func() (map[string]*trello.Label, error) {
+// 				panic("mock out the GetLabels method")
+// 			},
+// 			GetListsFunc: func() (map[string]*trello.List, error) {
+// 				panic("mock out the GetLists method")
+// 			},
+// 			GetUserJiraCardsFunc: func() ([]*trello.Card, error) {
+// 				panic("mock out the GetUserJiraCards method")
+// 			},
+// 			MoveCardToListFunc: func(s1 string, s2 string) error {
+// 				panic("mock out the MoveCardToList method")
+// 			},
+// 			SetBoardFunc: func() error {
+// 				panic("mock out the SetBoard method")
+// 			},
+// 			UpdateCardLabelsFunc: func(s1 string, s2 string) error {
+// 				panic("mock out the UpdateCardLabels method")
+// 			},
+// 		}
 //
-//         // use mockedTrelloConnector in code that requires TrelloConnector
-//         // and then make assertions.
+// 		// use mockedTrelloConnector in code that requires TrelloConnector
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type TrelloConnectorMock struct {
 	// ConnectFunc mocks the Connect method.
 	ConnectFunc func() error
 
 	// CreateCardFunc mocks the CreateCard method.
-	CreateCardFunc func(in1 *trello.Card) error
+	CreateCardFunc func(card *trello.Card) error
 
 	// GetBoardsFunc mocks the GetBoards method.
 	GetBoardsFunc func() (map[string]*trello.Board, error)
@@ -77,13 +77,13 @@ type TrelloConnectorMock struct {
 	GetUserJiraCardsFunc func() ([]*trello.Card, error)
 
 	// MoveCardToListFunc mocks the MoveCardToList method.
-	MoveCardToListFunc func(in1 string, in2 string) error
+	MoveCardToListFunc func(s1 string, s2 string) error
 
 	// SetBoardFunc mocks the SetBoard method.
 	SetBoardFunc func() error
 
 	// UpdateCardLabelsFunc mocks the UpdateCardLabels method.
-	UpdateCardLabelsFunc func(in1 string, in2 string) error
+	UpdateCardLabelsFunc func(s1 string, s2 string) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -92,8 +92,8 @@ type TrelloConnectorMock struct {
 		}
 		// CreateCard holds details about calls to the CreateCard method.
 		CreateCard []struct {
-			// In1 is the in1 argument value.
-			In1 *trello.Card
+			// Card is the card argument value.
+			Card *trello.Card
 		}
 		// GetBoards holds details about calls to the GetBoards method.
 		GetBoards []struct {
@@ -112,20 +112,20 @@ type TrelloConnectorMock struct {
 		}
 		// MoveCardToList holds details about calls to the MoveCardToList method.
 		MoveCardToList []struct {
-			// In1 is the in1 argument value.
-			In1 string
-			// In2 is the in2 argument value.
-			In2 string
+			// S1 is the s1 argument value.
+			S1 string
+			// S2 is the s2 argument value.
+			S2 string
 		}
 		// SetBoard holds details about calls to the SetBoard method.
 		SetBoard []struct {
 		}
 		// UpdateCardLabels holds details about calls to the UpdateCardLabels method.
 		UpdateCardLabels []struct {
-			// In1 is the in1 argument value.
-			In1 string
-			// In2 is the in2 argument value.
-			In2 string
+			// S1 is the s1 argument value.
+			S1 string
+			// S2 is the s2 argument value.
+			S2 string
 		}
 	}
 	lockConnect          sync.RWMutex
@@ -167,29 +167,29 @@ func (mock *TrelloConnectorMock) ConnectCalls() []struct {
 }
 
 // CreateCard calls CreateCardFunc.
-func (mock *TrelloConnectorMock) CreateCard(in1 *trello.Card) error {
+func (mock *TrelloConnectorMock) CreateCard(card *trello.Card) error {
 	if mock.CreateCardFunc == nil {
 		panic("TrelloConnectorMock.CreateCardFunc: method is nil but TrelloConnector.CreateCard was just called")
 	}
 	callInfo := struct {
-		In1 *trello.Card
+		Card *trello.Card
 	}{
-		In1: in1,
+		Card: card,
 	}
 	mock.lockCreateCard.Lock()
 	mock.calls.CreateCard = append(mock.calls.CreateCard, callInfo)
 	mock.lockCreateCard.Unlock()
-	return mock.CreateCardFunc(in1)
+	return mock.CreateCardFunc(card)
 }
 
 // CreateCardCalls gets all the calls that were made to CreateCard.
 // Check the length with:
 //     len(mockedTrelloConnector.CreateCardCalls())
 func (mock *TrelloConnectorMock) CreateCardCalls() []struct {
-	In1 *trello.Card
+	Card *trello.Card
 } {
 	var calls []struct {
-		In1 *trello.Card
+		Card *trello.Card
 	}
 	mock.lockCreateCard.RLock()
 	calls = mock.calls.CreateCard
@@ -328,33 +328,33 @@ func (mock *TrelloConnectorMock) GetUserJiraCardsCalls() []struct {
 }
 
 // MoveCardToList calls MoveCardToListFunc.
-func (mock *TrelloConnectorMock) MoveCardToList(in1 string, in2 string) error {
+func (mock *TrelloConnectorMock) MoveCardToList(s1 string, s2 string) error {
 	if mock.MoveCardToListFunc == nil {
 		panic("TrelloConnectorMock.MoveCardToListFunc: method is nil but TrelloConnector.MoveCardToList was just called")
 	}
 	callInfo := struct {
-		In1 string
-		In2 string
+		S1 string
+		S2 string
 	}{
-		In1: in1,
-		In2: in2,
+		S1: s1,
+		S2: s2,
 	}
 	mock.lockMoveCardToList.Lock()
 	mock.calls.MoveCardToList = append(mock.calls.MoveCardToList, callInfo)
 	mock.lockMoveCardToList.Unlock()
-	return mock.MoveCardToListFunc(in1, in2)
+	return mock.MoveCardToListFunc(s1, s2)
 }
 
 // MoveCardToListCalls gets all the calls that were made to MoveCardToList.
 // Check the length with:
 //     len(mockedTrelloConnector.MoveCardToListCalls())
 func (mock *TrelloConnectorMock) MoveCardToListCalls() []struct {
-	In1 string
-	In2 string
+	S1 string
+	S2 string
 } {
 	var calls []struct {
-		In1 string
-		In2 string
+		S1 string
+		S2 string
 	}
 	mock.lockMoveCardToList.RLock()
 	calls = mock.calls.MoveCardToList
@@ -389,33 +389,33 @@ func (mock *TrelloConnectorMock) SetBoardCalls() []struct {
 }
 
 // UpdateCardLabels calls UpdateCardLabelsFunc.
-func (mock *TrelloConnectorMock) UpdateCardLabels(in1 string, in2 string) error {
+func (mock *TrelloConnectorMock) UpdateCardLabels(s1 string, s2 string) error {
 	if mock.UpdateCardLabelsFunc == nil {
 		panic("TrelloConnectorMock.UpdateCardLabelsFunc: method is nil but TrelloConnector.UpdateCardLabels was just called")
 	}
 	callInfo := struct {
-		In1 string
-		In2 string
+		S1 string
+		S2 string
 	}{
-		In1: in1,
-		In2: in2,
+		S1: s1,
+		S2: s2,
 	}
 	mock.lockUpdateCardLabels.Lock()
 	mock.calls.UpdateCardLabels = append(mock.calls.UpdateCardLabels, callInfo)
 	mock.lockUpdateCardLabels.Unlock()
-	return mock.UpdateCardLabelsFunc(in1, in2)
+	return mock.UpdateCardLabelsFunc(s1, s2)
 }
 
 // UpdateCardLabelsCalls gets all the calls that were made to UpdateCardLabels.
 // Check the length with:
 //     len(mockedTrelloConnector.UpdateCardLabelsCalls())
 func (mock *TrelloConnectorMock) UpdateCardLabelsCalls() []struct {
-	In1 string
-	In2 string
+	S1 string
+	S2 string
 } {
 	var calls []struct {
-		In1 string
-		In2 string
+		S1 string
+		S2 string
 	}
 	mock.lockUpdateCardLabels.RLock()
 	calls = mock.calls.UpdateCardLabels
