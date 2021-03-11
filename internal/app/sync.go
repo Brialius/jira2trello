@@ -205,6 +205,7 @@ func getTrelloCards(tCli TrelloConnector) (map[string]*trello.Card, error) {
 
 	cards, err := tCli.GetUserJiraCards()
 	if err != nil {
+		// todo: error returned from interface method should be wrapped
 		return nil, err
 	}
 

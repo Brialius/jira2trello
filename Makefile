@@ -2,7 +2,9 @@ PROJECTNAME=jira2trello
 MODULE=github.com/Brialius/$(PROJECTNAME)
 VERSION ?= $(shell git describe --tags --always --match=v* || echo v0)
 LDFLAGS=-ldflags "-X=$(MODULE)/internal.Version=$(VERSION)"
-LINTERFLAGS=--enable-all --disable gochecknoinits --disable gochecknoglobals --disable goimports --disable gci --disable gofumpt --disable interfacer --disable maligned --out-format=tab --tests=false
+LINTERFLAGS=--enable-all --disable gochecknoinits --disable gochecknoglobals --disable goimports --disable gci \
+--disable gofumpt --disable interfacer --disable maligned --disable forbidigo --disable exhaustivestruct \
+--disable cyclop --disable wrapcheck --disable godox --out-format=tab --tests=false
 BUILDFLAGS=$(LDFLAGS)
 GOEXE := $(shell go env GOEXE)
 GOPATH := $(shell go env GOPATH)

@@ -31,7 +31,8 @@ func WeeklyReport(jCli JiraConnector) {
 		log.Fatalf("Can't connect to jira server: %s", err)
 	}
 
-	tasks, err := jCli.GetUserTasks("(status changed to closed after -7d  OR status = \"In Dev / In Progress\") AND (timespent != 0 OR issuetype = Story) ORDER BY priority DESC, updated DESC")
+	tasks, err := jCli.GetUserTasks("(status changed to closed after -7d  OR status = \"In Dev / In Progress\") " +
+		"AND (timespent != 0 OR issuetype = Story) ORDER BY priority DESC, updated DESC")
 	if err != nil {
 		log.Fatalf("Can't get jira tasks: %s", err)
 	}

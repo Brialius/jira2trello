@@ -48,6 +48,7 @@ func (j *Client) Connect() error {
 
 	client, err := jira.NewClient(tp.Client(), j.URL)
 	if err != nil {
+		// todo: error returned from external package is unwrapped
 		return err
 	}
 
@@ -61,6 +62,7 @@ func (j *Client) GetUserTasks(jql string) (map[string]*Task, error) {
 	issues, _, err := j.cli.Issue.Search("assignee = currentUser() AND "+jql, nil)
 
 	if err != nil {
+		// todo: error returned from external package is unwrapped
 		return nil, err
 	}
 
