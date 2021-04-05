@@ -1,5 +1,5 @@
 # jira2trello
-[![Go Report Card](https://goreportcard.com/badge/github.com/Brialius/jira2trello)](https://goreportcard.com/report/github.com/Brialius/jira2trello)
+[![CI](https://github.com/Brialius/jira2trello/actions/workflows/ci.yml/badge.svg)](https://github.com/Brialius/jira2trello/actions/workflows/ci.yml)[![Go Report Card](https://goreportcard.com/badge/github.com/Brialius/jira2trello)](https://goreportcard.com/report/github.com/Brialius/jira2trello)
 
 ## Usage
 ```
