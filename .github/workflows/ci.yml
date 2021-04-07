@@ -3,11 +3,18 @@ name: CI
 on:
   pull_request:
     branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   check:
     name: Build check
     runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'go' ]
+    
     steps:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
@@ -17,6 +24,14 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v1
+        with:
+          languages: ${{ matrix.language }}
+
       - name: CI
         run: |
           make ci
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v1
