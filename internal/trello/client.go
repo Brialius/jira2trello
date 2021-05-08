@@ -29,6 +29,8 @@ import (
 	"strings"
 )
 
+const MAX_DESC_LENGHT = 10000
+
 type Client struct {
 	*Config
 	cli   *trello.Client
@@ -156,12 +158,18 @@ func (t *Client) writeToJSONFile(value interface{}, fileName string) {
 }
 
 func (t *Client) CreateCard(card *Card) error {
+	desc := card.Desc
+
+	if len(desc) > MAX_DESC_LENGHT {
+		desc = strings.ToValidUTF8(card.Desc[:MAX_DESC_LENGHT], "") + "..."
+	}
+
 	return t.cli.CreateCard(&trello.Card{
 		Name:      card.Name,
 		IDLabels:  *card.IDLabels,
 		IDList:    card.ListID,
 		IDMembers: strings.Split(card.IDMembers, ","),
-		Desc:      card.Desc,
+		Desc:      desc,
 	}, trello.Defaults())
 }
 
