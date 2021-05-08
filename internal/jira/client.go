@@ -86,7 +86,7 @@ func (j *Client) GetUserTasks(jql string) (map[string]*Task, error) {
 		}
 	}
 
-	j.writeToJSONFile(res, "jira_tasks.json")
+	j.writeToJSONFile(res, "debug_jira_tasks.json")
 
 	return res, nil
 }

@@ -29,6 +29,8 @@ import (
 	"strings"
 )
 
+const MaxDescLength = 10000
+
 type Client struct {
 	*Config
 	cli   *trello.Client
@@ -67,8 +69,8 @@ func (t *Client) GetBoards() (map[string]*Board, error) {
 		}
 	}
 
-	t.writeToJSONFile(boards, "boards.json")
-	t.writeToJSONFile(res, "boards_result.json")
+	t.writeToJSONFile(boards, "debug_debug_boards.json")
+	t.writeToJSONFile(res, "debug_debug_boards_result.json")
 
 	return res, nil
 }
@@ -87,8 +89,8 @@ func (t *Client) GetLists() (map[string]*List, error) {
 		}
 	}
 
-	t.writeToJSONFile(lists, "lists.json")
-	t.writeToJSONFile(res, "lists_result.json")
+	t.writeToJSONFile(lists, "debug_lists.json")
+	t.writeToJSONFile(res, "debug_lists_result.json")
 
 	return res, nil
 }
@@ -108,8 +110,8 @@ func (t *Client) GetLabels() (map[string]*Label, error) {
 		}
 	}
 
-	t.writeToJSONFile(labels, "labels.json")
-	t.writeToJSONFile(res, "labels_result.json")
+	t.writeToJSONFile(labels, "debug_labels.json")
+	t.writeToJSONFile(res, "debug_labels_result.json")
 
 	return res, nil
 }
@@ -138,8 +140,8 @@ func (t *Client) GetUserJiraCards() ([]*Card, error) {
 		}
 	}
 
-	t.writeToJSONFile(cards, "cards.json")
-	t.writeToJSONFile(res, "cards_result.json")
+	t.writeToJSONFile(cards, "debug_cards.json")
+	t.writeToJSONFile(res, "debug_cards_result.json")
 
 	return res, nil
 }
@@ -156,12 +158,18 @@ func (t *Client) writeToJSONFile(value interface{}, fileName string) {
 }
 
 func (t *Client) CreateCard(card *Card) error {
+	desc := card.Desc
+
+	if len(desc) > MaxDescLength {
+		desc = strings.ToValidUTF8(card.Desc[:MaxDescLength], "") + "..."
+	}
+
 	return t.cli.CreateCard(&trello.Card{
 		Name:      card.Name,
 		IDLabels:  *card.IDLabels,
 		IDList:    card.ListID,
 		IDMembers: strings.Split(card.IDMembers, ","),
-		Desc:      card.Desc,
+		Desc:      desc,
 	}, trello.Defaults())
 }
 
@@ -201,7 +209,7 @@ func (t *Client) GetSelfMemberID() (string, error) {
 		return "", err
 	}
 
-	t.writeToJSONFile(member, "self_id.json")
+	t.writeToJSONFile(member, "debug_self_id.json")
 
 	return member.ID, nil
 }

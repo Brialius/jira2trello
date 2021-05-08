@@ -26,3 +26,9 @@ vendor/
 
 # Test config
 test.yaml
+
+# Generated binares
+/bin/
+
+# Debug info
+debug_*.json
