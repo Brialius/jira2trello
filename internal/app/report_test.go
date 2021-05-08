@@ -9,7 +9,7 @@ import (
 
 func Test_printReport(t *testing.T) {
 	var tCards = make([]*trello.Card, 0)
-	mustLoadJSONFile(t, "testdata/trello_cards.json", &tCards)
+	mustLoadJSONFile(t, "testdata/test_trello_cards.json", &tCards)
 
 	tCli := GetTrelloMockedCli(tCards)
 

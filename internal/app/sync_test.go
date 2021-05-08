@@ -34,7 +34,7 @@ import (
 
 func TestSyncService_printJiraTasks(t *testing.T) {
 	var jTasks = map[string]*jira.Task{}
-	mustLoadJSONFile(t, "testdata/jira_tasks.json", &jTasks)
+	mustLoadJSONFile(t, "testdata/test_jira_tasks.json", &jTasks)
 
 	type fields struct {
 		jTasks map[string]*jira.Task
@@ -108,10 +108,10 @@ func mustLoadJSONFile(t *testing.T, file string, variable interface{}) []byte {
 
 func TestSyncService_Sync(t *testing.T) {
 	var jTasks = map[string]*jira.Task{}
-	mustLoadJSONFile(t, "testdata/jira_tasks.json", &jTasks)
+	mustLoadJSONFile(t, "testdata/test_jira_tasks.json", &jTasks)
 
 	tCards := make([]*trello.Card, 0)
-	mustLoadJSONFile(t, "testdata/trello_cards.json", &tCards)
+	mustLoadJSONFile(t, "testdata/test_trello_cards.json", &tCards)
 
 	jCli := GetJiraMockedCli(jTasks)
 	tCli := GetTrelloMockedCli(tCards)
