@@ -93,8 +93,10 @@ func (j *Client) GetUserTasks(jql string) (map[string]*Task, error) {
 
 func (j *Client) writeToJSONFile(value interface{}, fileName string) {
 	if j.Debug {
+		const filePermissions = 0600
+
 		b, _ := json.MarshalIndent(value, "", "  ")
-		err := ioutil.WriteFile(fileName, b, 0600)
+		err := ioutil.WriteFile(fileName, b, filePermissions)
 
 		if err != nil {
 			fmt.Printf("can't write debug file: %s", err)
