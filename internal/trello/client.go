@@ -148,8 +148,10 @@ func (t *Client) GetUserJiraCards() ([]*Card, error) {
 
 func (t *Client) writeToJSONFile(value interface{}, fileName string) {
 	if t.Debug {
+		const filePermissions = 0600
+
 		b, _ := json.MarshalIndent(value, "", "  ")
-		err := ioutil.WriteFile(fileName, b, 0600)
+		err := ioutil.WriteFile(fileName, b, filePermissions)
 
 		if err != nil {
 			fmt.Printf("can't write debug file: %s", err)

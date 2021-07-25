@@ -30,9 +30,11 @@ import (
 )
 
 func printJiraTasks(out io.Writer, jTasks map[string]*jira.Task) {
+	const padding = 4
+
 	w := new(tabwriter.Writer)
 
-	w.Init(out, 0, 0, 4, ' ', tabwriter.FilterHTML+tabwriter.StripEscape)
+	w.Init(out, 0, 0, padding, ' ', tabwriter.FilterHTML+tabwriter.StripEscape)
 
 	list := make([]*jira.Task, 0, len(jTasks))
 
