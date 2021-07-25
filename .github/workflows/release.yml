@@ -35,7 +35,7 @@ jobs:
     strategy:
       matrix:
         goos: [ 'darwin', 'linux', 'windows' ]
-        goarch: [ 'amd64' ]
+        goarch: [ 'amd64', '386' ]
     steps:
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
