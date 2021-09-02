@@ -5,14 +5,14 @@ LDFLAGS=-ldflags "-X=$(MODULE)/internal.Version=$(VERSION)"
 LINTERFLAGS=--enable-all --disable gochecknoinits --disable gochecknoglobals --disable goimports --disable gci \
 --disable gofumpt --disable interfacer --disable maligned --disable forbidigo --disable exhaustivestruct \
 --disable cyclop --disable wrapcheck --disable godox --out-format=tab --tests=false
-BUILDFLAGS=$(LDFLAGS)
+BUILDFLAGS=-mod vendor $(LDFLAGS)
 GOEXE := $(shell go env GOEXE)
 GOPATH := $(shell go env GOPATH)
 GOOS := $(shell go env GOOS)
 BIN=bin/$(PROJECTNAME)$(GOEXE)
 LINT_PATH := ./bin/golangci-lint
 LINT_PATH_WIN := golangci-lint
-LINT_SETUP := curl -sfL "https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh" | sh -s latest
+LINT_SETUP := curl -sfL "https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh" | sh -s v1.42.0
 
 # -race doesn't work in Windows
 ifneq ($(GOOS), windows)
@@ -29,7 +29,6 @@ export
 .PHONY: setup
 setup: ## Install all the build and lint dependencies
 	$(LINT_SETUP)
-	go get ./...
 
 .PHONY: test
 test: ## Run all the tests
@@ -48,7 +47,7 @@ generate:
 	go generate ./...
 
 .PHONY: build
-build: clean mod-refresh ## Build a version
+build: clean ## Build a version
 	go build $(BUILDFLAGS) -o $(BIN) $(MODULE)
 
 .PHONY: install
@@ -62,6 +61,7 @@ clean: ## Remove temporary files
 .PHONY: mod-refresh
 mod-refresh: ## Refresh modules
 	go mod tidy -v
+	go mod vendor
 
 .PHONY: version
 version:
