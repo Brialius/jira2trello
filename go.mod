@@ -10,6 +10,7 @@ require (
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/google/go-cmp v0.5.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
+	github.com/matryer/moq v0.2.3 // indirect
 	github.com/mattn/go-colorable v0.1.7
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
