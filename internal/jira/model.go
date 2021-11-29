@@ -9,6 +9,7 @@ import (
 type Task struct {
 	Created    time.Time
 	Updated    time.Time
+	DueDate    time.Time
 	TimeSpent  time.Duration
 	Summary    string
 	Link       string
@@ -23,13 +24,15 @@ type Task struct {
 }
 
 func (j Task) String() string {
-	return fmt.Sprintf("%s | %s | %s | %s, %s, (%0.1f)",
-		j.Status, j.Type, j.Key, j.Summary, j.Created.Format(time.RFC822), j.TimeSpent.Hours())
+	return fmt.Sprintf("%s | %s | %s | %s, %s, %s, (%0.1f)",
+		j.Status, j.Type, j.Key, j.Summary, j.Created.Format(time.RFC822),
+		j.DueDate.Format(time.RFC822), j.TimeSpent.Hours())
 }
 
 func (j Task) TabString() string {
 	jStatus := j.Status
 	jType := j.Type
+	jDueDate := fmt.Sprintf("%.9s", j.DueDate.Format(time.RFC822))
 
 	switch jStatus {
 	case "Dependency", "Blocked":
@@ -51,6 +54,13 @@ func (j Task) TabString() string {
 		jType = internal.Blue + jType + internal.ColorOff
 	}
 
-	return fmt.Sprintf("%s \t%s \t%s \t%.70s \t%.9s \t%0.1f",
-		jStatus, jType, j.Key, j.Summary, j.Created.Format(time.RFC822), j.TimeSpent.Hours())
+	if time.Now().After(j.DueDate) {
+		jDueDate = internal.Red + jDueDate + internal.ColorOff
+	} else {
+		jDueDate = internal.Green + jDueDate + internal.ColorOff
+	}
+
+	return fmt.Sprintf("%s \t%s \t%s \t%.70s \t%.9s \t%s \t%0.1f",
+		jStatus, jType, j.Key, j.Summary, j.Created.Format(time.RFC822),
+		jDueDate, j.TimeSpent.Hours())
 }

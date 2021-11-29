@@ -70,6 +70,7 @@ func (j *Client) GetUserTasks(jql string) (map[string]*Task, error) {
 		res[issue.Key] = &Task{
 			Created:   time.Time(issue.Fields.Created),
 			Updated:   time.Time(issue.Fields.Updated),
+			DueDate:   time.Time(issue.Fields.Duedate),
 			TimeSpent: time.Duration(issue.Fields.TimeSpent) * time.Second,
 			Summary:   issue.Fields.Summary,
 			Link:      j.URL + "/browse/" + issue.Key,

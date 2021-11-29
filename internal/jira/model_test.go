@@ -9,6 +9,7 @@ func TestTask_String(t *testing.T) {
 	type fields struct {
 		Created    time.Time
 		Updated    time.Time
+		DueDate    time.Time
 		TimeSpent  time.Duration
 		Summary    string
 		Link       string
@@ -31,6 +32,7 @@ func TestTask_String(t *testing.T) {
 			fields: fields{
 				Created:   time.Date(2020, 1, 1, 1, 1, 1, 0, time.UTC),
 				Updated:   time.Date(2020, 1, 1, 1, 1, 1, 1, time.UTC),
+				DueDate:   time.Date(2020, 1, 2, 1, 1, 1, 1, time.UTC),
 				TimeSpent: 36000000000000,
 				Summary:   "Test task 132",
 				Link:      "https://jira-site/browse/JIRA1-132",
@@ -38,7 +40,7 @@ func TestTask_String(t *testing.T) {
 				Status:    "In review",
 				Type:      "Task",
 			},
-			want: "In review | Task | JIRA1-132 | Test task 132, 01 Jan 20 01:01 UTC, (10.0)",
+			want: "In review | Task | JIRA1-132 | Test task 132, 01 Jan 20 01:01 UTC, 02 Jan 20 01:01 UTC, (10.0)",
 		},
 	}
 	for _, tt := range tests {
@@ -46,6 +48,7 @@ func TestTask_String(t *testing.T) {
 			j := Task{
 				Created:    tt.fields.Created,
 				Updated:    tt.fields.Updated,
+				DueDate:    tt.fields.DueDate,
 				TimeSpent:  tt.fields.TimeSpent,
 				Summary:    tt.fields.Summary,
 				Link:       tt.fields.Link,
