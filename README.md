@@ -23,7 +23,7 @@ Usage:
 ```
 ## Screenshots
 #### Sync command
-![image](https://user-images.githubusercontent.com/6441812/91293559-df93a400-e7a0-11ea-9a41-8ba0207c08c1.png)
+![image](https://user-images.githubusercontent.com/6441812/143793782-159757dc-12fe-46c9-a502-1229f346f4d3.png)
 
 ## Build
 ### make goals
