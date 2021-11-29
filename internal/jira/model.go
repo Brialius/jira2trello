@@ -32,7 +32,11 @@ func (j Task) String() string {
 func (j Task) TabString() string {
 	jStatus := j.Status
 	jType := j.Type
-	jDueDate := fmt.Sprintf("%.9s", j.DueDate.Format(time.RFC822))
+	jDueDate := ""
+
+	if !j.DueDate.IsZero() {
+		jDueDate = fmt.Sprintf("%.9s", j.DueDate.Format(time.RFC822))
+	}
 
 	switch jStatus {
 	case "Dependency", "Blocked":
@@ -54,7 +58,7 @@ func (j Task) TabString() string {
 		jType = internal.Blue + jType + internal.ColorOff
 	}
 
-	if time.Now().After(j.DueDate) {
+	if len(jDueDate) > 0 && time.Now().After(j.DueDate) {
 		jDueDate = internal.Red + jDueDate + internal.ColorOff
 	} else {
 		jDueDate = internal.Green + jDueDate + internal.ColorOff
