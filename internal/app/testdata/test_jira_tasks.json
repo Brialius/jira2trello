@@ -2,7 +2,6 @@
   "JIRA1-1110": {
     "Created": "2020-08-07T13:13:42-04:00",
     "Updated": "2020-08-21T09:17:47-04:00",
-    "Duedate": "2020-08-23T09:17:47-04:00",
     "TimeSpent": 39600000000000,
     "Summary": "Task name 1110",
     "Link": "https://jira-site/browse/JIRA1-1110",
@@ -18,7 +17,6 @@
   "JIRA1-1130": {
     "Created": "2020-08-08T15:51:36-04:00",
     "Updated": "2020-08-20T05:35:13-04:00",
-    "Duedate": "2020-08-22T05:35:13-04:00",
     "TimeSpent": 46800000000000,
     "Summary": "Task name 1130",
     "Link": "https://jira-site/browse/JIRA1-1130",
@@ -34,7 +32,6 @@
   "JIRA1-1131": {
     "Created": "2020-08-08T15:53:01-04:00",
     "Updated": "2020-08-17T06:12:04-04:00",
-    "Duedate": "2020-08-15T06:12:04-04:00",
     "TimeSpent": 50400000000000,
     "Summary": "Task name 1131",
     "Link": "https://jira-site/browse/JIRA1-1131",
@@ -50,7 +47,6 @@
   "JIRA1-1133": {
     "Created": "2020-08-10T10:48:49-04:00",
     "Updated": "2020-08-21T09:11:17-04:00",
-    "Duedate": "2020-08-24T09:11:17-04:00",
     "TimeSpent": 7200000000000,
     "Summary": "Task name 1133",
     "Link": "https://jira-site/browse/JIRA1-1133",
@@ -306,7 +302,6 @@
   "JIRA1-991": {
     "Created": "2020-05-18T12:40:14-04:00",
     "Updated": "2020-08-03T11:46:48-04:00",
-    "Duedate": "2020-11-03T11:46:48-04:00",
     "TimeSpent": 1800000000000,
     "Summary": "Task name 991",
     "Link": "https://jira-site/browse/JIRA1-991",
