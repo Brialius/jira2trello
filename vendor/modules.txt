@@ -6,7 +6,7 @@ github.com/AlecAivazis/survey/v2/terminal
 # github.com/adlio/trello v1.7.0
 ## explicit
 github.com/adlio/trello
-# github.com/andygrunwald/go-jira v1.14.0
+# github.com/andygrunwald/go-jira v1.15.1
 ## explicit
 github.com/andygrunwald/go-jira
 # github.com/blang/semver v3.5.1+incompatible
@@ -20,7 +20,8 @@ github.com/fatih/structs
 github.com/fsnotify/fsnotify
 # github.com/golang-jwt/jwt v3.2.2+incompatible
 ## explicit
-github.com/golang-jwt/jwt
+# github.com/golang-jwt/jwt/v4 v4.3.0
+github.com/golang-jwt/jwt/v4
 # github.com/golang/protobuf v1.4.2
 github.com/golang/protobuf/proto
 # github.com/google/go-github/v30 v30.1.0

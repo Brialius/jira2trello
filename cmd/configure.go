@@ -56,7 +56,12 @@ var configureCmd = &cobra.Command{
 					Message: "What is jira username?",
 					Default: viper.GetString("jira.user"),
 				},
-				Validate: survey.Required,
+			},
+			{
+				Name: "token",
+				Prompt: &survey.Password{
+					Message: "What is jira PAT?",
+				},
 			},
 			{
 				Name: "password",
