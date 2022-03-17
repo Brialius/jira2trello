@@ -41,12 +41,26 @@ func NewClient(cfg *Config) *Client {
 }
 
 func (j *Client) Connect() error {
-	tp := jira.BasicAuthTransport{
-		Username: j.User,
-		Password: j.Password,
+	var (
+		client *jira.Client
+		err    error
+	)
+
+	if j.Token != "" {
+		tp := jira.PATAuthTransport{
+			Token: j.Token,
+		}
+
+		client, err = jira.NewClient(tp.Client(), j.URL)
+	} else {
+		tp := jira.BasicAuthTransport{
+			Username: j.User,
+			Password: j.Password,
+		}
+
+		client, err = jira.NewClient(tp.Client(), j.URL)
 	}
 
-	client, err := jira.NewClient(tp.Client(), j.URL)
 	if err != nil {
 		// todo: error returned from external package is unwrapped
 		return err
