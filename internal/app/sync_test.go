@@ -29,6 +29,7 @@ import (
 	"github.com/mattn/go-colorable"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
+	"sort"
 	"testing"
 )
 
@@ -61,7 +62,7 @@ In Dev / In Progress     Sub-task     JIRA1-431      Task name 431      08 Jul 2
 In Dev / In Progress     Sub-task     JIRA1-433      Task name 433      08 Jul 20     21 Sep 20     19.0
 In Dev / In Progress     Sub-task     JIRA1-434      Task name 434      08 Jul 20     21 Sep 20     12.0
 ToDo                     Sub-task     JIRA1-1110     Task name 1110     07 Aug 20                   11.0
-In Dev / In Progress     Sub-task     JIRA1-1130     Task name 1130     08 Aug 20                   13.0
+Dev Complete             Sub-task     JIRA1-1130     Task name 1130     08 Aug 20                   13.0
 In Dev / In Progress     Sub-task     JIRA1-1131     Task name 1131     08 Aug 20                   14.0
 In Dev / In Progress     Sub-task     JIRA1-1133     Task name 1133     10 Aug 20                   2.0
 In Dev / In Progress     Bug          JIRA1-1194     Task name 1194     12 Aug 20     20 Aug 20     1.0
@@ -146,15 +147,19 @@ func TestSyncService_Sync(t *testing.T) {
 			}
 			s.Sync()
 
-			require.Equal(t, []struct{ S1, S2 string }{
+			require.Equal(t, calls{
 				{"098098098098098098098011", "121212121212121212121fa4,12121212121212121212a0c8"}},
-				tCli.UpdateCardLabelsCalls())
+				calls(tCli.UpdateCardLabelsCalls()))
 
-			require.Equal(t, []struct{ S1, S2 string }{
+			moveCalls := calls(tCli.MoveCardToListCalls())
+			sort.Sort(moveCalls)
+
+			require.Equal(t, calls{
+				{"098098098098098098098008", "12345678909876543219d1cc"},
 				{"098098098098098098098011", "12345678909876543219d1cc"},
 				{"098098098098098098098018", "12345678909876543219d1cf"},
 			},
-				tCli.MoveCardToListCalls())
+				moveCalls)
 
 			require.Equal(t, []struct{ Card *trello.Card }{{Card: &trello.Card{
 				Name:      "JIRA1-1194 | Task name 1194",
@@ -165,6 +170,20 @@ func TestSyncService_Sync(t *testing.T) {
 			}}}, tCli.CreateCardCalls())
 		})
 	}
+}
+
+type calls []struct{ S1, S2 string }
+
+func (c calls) Len() int {
+	return len(c)
+}
+
+func (c calls) Less(a, b int) bool {
+	return c[a].S1 < c[b].S1
+}
+
+func (c calls) Swap(a, b int) {
+	c[a], c[b] = c[b], c[a]
 }
 
 func GetJiraMockedCli(jTasks map[string]*jira.Task) *JiraConnectorMock {

@@ -114,7 +114,7 @@ func (s *SyncService) syncTasks() error {
 		case "Dependency", "Blocked":
 			listID = s.tCli.GetConfig().Lists.Doing
 			labels = append(labels, s.tCli.GetConfig().Labels.Blocked)
-		case "jTask.Status", "In QA Review":
+		case "Dev Complete", "In QA Review":
 			listID = s.tCli.GetConfig().Lists.Review
 		}
 
