@@ -61,7 +61,7 @@ In Dev / In Progress     Sub-task     JIRA1-431      Task name 431      08 Jul 2
 In Dev / In Progress     Sub-task     JIRA1-433      Task name 433      08 Jul 20     21 Sep 20     19.0
 In Dev / In Progress     Sub-task     JIRA1-434      Task name 434      08 Jul 20     21 Sep 20     12.0
 ToDo                     Sub-task     JIRA1-1110     Task name 1110     07 Aug 20                   11.0
-In Dev / In Progress     Sub-task     JIRA1-1130     Task name 1130     08 Aug 20                   13.0
+Dev Complete             Sub-task     JIRA1-1130     Task name 1130     08 Aug 20                   13.0
 In Dev / In Progress     Sub-task     JIRA1-1131     Task name 1131     08 Aug 20                   14.0
 In Dev / In Progress     Sub-task     JIRA1-1133     Task name 1133     10 Aug 20                   2.0
 In Dev / In Progress     Bug          JIRA1-1194     Task name 1194     12 Aug 20     20 Aug 20     1.0
@@ -151,6 +151,7 @@ func TestSyncService_Sync(t *testing.T) {
 				tCli.UpdateCardLabelsCalls())
 
 			require.Equal(t, []struct{ S1, S2 string }{
+				{"098098098098098098098008", "12345678909876543219d1cc"},
 				{"098098098098098098098011", "12345678909876543219d1cc"},
 				{"098098098098098098098018", "12345678909876543219d1cf"},
 			},
