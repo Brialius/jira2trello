@@ -29,6 +29,7 @@ import (
 	"github.com/mattn/go-colorable"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
+	"sort"
 	"testing"
 )
 
@@ -146,16 +147,19 @@ func TestSyncService_Sync(t *testing.T) {
 			}
 			s.Sync()
 
-			require.Equal(t, []struct{ S1, S2 string }{
+			require.Equal(t, calls{
 				{"098098098098098098098011", "121212121212121212121fa4,12121212121212121212a0c8"}},
-				tCli.UpdateCardLabelsCalls())
+				calls(tCli.UpdateCardLabelsCalls()))
 
-			require.Equal(t, []struct{ S1, S2 string }{
+			moveCalls := calls(tCli.MoveCardToListCalls())
+			sort.Sort(moveCalls)
+
+			require.Equal(t, calls{
 				{"098098098098098098098008", "12345678909876543219d1cc"},
 				{"098098098098098098098011", "12345678909876543219d1cc"},
 				{"098098098098098098098018", "12345678909876543219d1cf"},
 			},
-				tCli.MoveCardToListCalls())
+				moveCalls)
 
 			require.Equal(t, []struct{ Card *trello.Card }{{Card: &trello.Card{
 				Name:      "JIRA1-1194 | Task name 1194",
@@ -166,6 +170,20 @@ func TestSyncService_Sync(t *testing.T) {
 			}}}, tCli.CreateCardCalls())
 		})
 	}
+}
+
+type calls []struct{ S1, S2 string }
+
+func (c calls) Len() int {
+	return len(c)
+}
+
+func (c calls) Less(a, b int) bool {
+	return c[a].S1 < c[b].S1
+}
+
+func (c calls) Swap(a, b int) {
+	c[a], c[b] = c[b], c[a]
 }
 
 func GetJiraMockedCli(jTasks map[string]*jira.Task) *JiraConnectorMock {
