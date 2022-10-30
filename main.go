@@ -24,10 +24,11 @@ package main
 import (
 	"fmt"
 	"github.com/Brialius/jira2trello/cmd"
-	"github.com/Brialius/jira2trello/internal"
 )
 
+var version = "v0.0.0-dev"
+
 func main() {
-	fmt.Printf("jira2trello %s\n", internal.Version)
-	cmd.Execute()
+	fmt.Printf("jira2trello %s\n", version)
+	cmd.Execute(version)
 }

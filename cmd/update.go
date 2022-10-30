@@ -32,7 +32,7 @@ var updateCmd = &cobra.Command{
 	Short: "Update jira2trello",
 	Long:  "Update jira2trello",
 	Run: func(cmd *cobra.Command, args []string) {
-		app.DoSelfUpdate()
+		app.DoSelfUpdate(Version)
 	},
 }
 
