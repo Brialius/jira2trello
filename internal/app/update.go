@@ -2,14 +2,13 @@ package app
 
 import (
 	"fmt"
-	"github.com/Brialius/jira2trello/internal"
 	"github.com/blang/semver"
 	"github.com/rhysd/go-github-selfupdate/selfupdate"
 	"strings"
 )
 
-func DoSelfUpdate() {
-	v := semver.MustParse(strings.TrimPrefix(internal.Version, "v"))
+func DoSelfUpdate(currentVersion string) {
+	v := semver.MustParse(strings.TrimPrefix(currentVersion, "v"))
 
 	slug := "Brialius/jira2trello"
 	latest, found, err := selfupdate.DetectLatest(slug)
@@ -21,8 +20,8 @@ func DoSelfUpdate() {
 	}
 
 	if latest.Version.Equals(v) {
-		// latest version is the same as current version. It means current binary is up to date.
-		fmt.Println("Current binary is the latest version:", internal.Version)
+		// latest version is the same as current version. It means current binary is up-to-date.
+		fmt.Println("Current binary is the latest version:", currentVersion)
 
 		return
 	}
