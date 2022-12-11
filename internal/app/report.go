@@ -23,21 +23,70 @@ package app
 
 import (
 	"fmt"
-	"github.com/Brialius/jira2trello/internal"
 	"github.com/Brialius/jira2trello/internal/trello"
 	"github.com/mattn/go-colorable"
+	"html/template"
 	"io"
 	"log"
+	"os"
 	"sort"
+	"strings"
+	"time"
 )
 
 const (
-	orderDone = iota
-	orderDoing
-	orderReview
+	doneString   = "Done"
+	doingString  = "In progress"
+	reviewString = "In review"
 )
 
-func Report(tCli TrelloConnector, jiraURL string) {
+type task struct {
+	Name   string
+	Status string
+	Link   string
+	Key    string
+}
+
+type report struct {
+	HtmlReport bool
+	Tasks      []*task
+	WeekNumber int
+	Year       int
+}
+
+func newReport(htmlReport bool, tasks []*task) *report {
+	year, week := time.Now().ISOWeek()
+	return &report{
+		HtmlReport: htmlReport,
+		Tasks:      tasks,
+		WeekNumber: week,
+		Year:       year,
+	}
+}
+
+// Generate report
+func (r *report) generate(out io.Writer) {
+	if r.HtmlReport {
+		t := template.Must(template.New("report").Parse(htmlTemplate))
+		err := t.Execute(out, r)
+
+		if err != nil {
+			log.Fatalf("can't generate html report: %s", err)
+		}
+
+		return
+	}
+
+	_, _ = fmt.Fprintln(out, "\n----------------------------------")
+
+	for _, t := range r.Tasks {
+		_, _ = fmt.Fprintf(out, "\n%s\n", t)
+	}
+
+	_, _ = fmt.Fprintln(out, "\n----------------------------------")
+}
+
+func Report(tCli TrelloConnector, jiraURL string, reportHtml bool) {
 	if err := tCli.Connect(); err != nil {
 		log.Fatalf("Can't connect to trello: %s", err)
 	}
@@ -47,55 +96,73 @@ func Report(tCli TrelloConnector, jiraURL string) {
 		log.Fatalf("can't get trello cards: %s", err)
 	}
 
-	printReport(colorable.NewColorableStdout(), tCli, tCards, jiraURL)
+	tasks := trelloTasks(tCards, tCli, jiraURL)
+
+	newReport(reportHtml, tasks).generate(getOutputWriter(reportHtml))
 }
 
-func printReport(out io.Writer, tCli TrelloConnector, tCards []*trello.Card, jiraURL string) {
-	var (
-		done       int
-		inProgress int
-		inReview   int
-	)
+// Determine destination writer
+// depends on html report flag
+func getOutputWriter(html bool) io.Writer {
+	if html {
+		f, err := os.OpenFile("jira2trello-report.html", os.O_CREATE|os.O_WRONLY, 0644)
 
-	sort.Slice(tCards, func(i, j int) bool {
-		l := map[string]int{
-			tCli.GetConfig().Lists.Done:   orderDone,
-			tCli.GetConfig().Lists.Doing:  orderDoing,
-			tCli.GetConfig().Lists.Review: orderReview,
+		if err != nil {
+			log.Fatalf("can't create report file: %s", err)
 		}
 
-		return l[tCards[i].ListID] < l[tCards[j].ListID]
+		fmt.Printf("Report saved to %s\n", f.Name())
+
+		return f
+	}
+
+	return colorable.NewColorableStdout()
+}
+
+func trelloTasks(tCards []*trello.Card, tCli TrelloConnector, jiraURL string) []*task {
+	done := make([]*task, 0)
+	inProgress := make([]*task, 0)
+	inReview := make([]*task, 0)
+
+	sort.Slice(tCards, func(i, j int) bool {
+		return tCards[i].Key < tCards[j].Key
 	})
 
-	_, _ = fmt.Fprintln(out, "\n----------------------------------")
-
-	doneString := internal.Green + "Done" + internal.ColorOff
-	doingString := internal.Yellow + "In progress" + internal.ColorOff
-	reviewString := internal.Cyan + "In review" + internal.ColorOff
+	tasks := make([]*task, 0)
 
 	for _, tCard := range tCards {
 		switch {
 		case tCard.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Done}):
-			printReportCard(out, tCard, doneString, jiraURL)
-			done++
+			done = append(done, &task{
+				Name:   strings.TrimPrefix(tCard.Name, tCard.Key),
+				Status: doneString,
+				Link:   jiraURL + "/browse/" + tCard.Key,
+				Key:    tCard.Key,
+			})
 		case tCard.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Doing}):
-			printReportCard(out, tCard, doingString, jiraURL)
-			inProgress++
+			inProgress = append(inProgress, &task{
+				Name:   strings.TrimPrefix(tCard.Name, tCard.Key),
+				Status: doingString,
+				Link:   jiraURL + "/browse/" + tCard.Key,
+				Key:    tCard.Key,
+			})
 		case tCard.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Review}):
-			printReportCard(out, tCard, reviewString, jiraURL)
-			inReview++
+			inReview = append(inReview, &task{
+				Name:   strings.TrimPrefix(tCard.Name, tCard.Key),
+				Status: reviewString,
+				Link:   jiraURL + "/browse/" + tCard.Key,
+				Key:    tCard.Key,
+			})
 		}
 	}
 
-	_, _ = fmt.Fprintln(out, "\n----------------------------------")
-	_, _ = fmt.Fprintln(out, doingString+":", inProgress)
-	_, _ = fmt.Fprintln(out, reviewString+":", inReview)
-	_, _ = fmt.Fprintln(out, doneString+":", done)
+	tasks = append(tasks, done...)
+	tasks = append(tasks, inProgress...)
+	tasks = append(tasks, inReview...)
+
+	return tasks
 }
 
-func printReportCard(out io.Writer, tCard *trello.Card, status string, jiraURL string) {
-	httpPrefix := internal.Blue + jiraURL + "/browse/"
-
-	_, _ = fmt.Fprintf(out, "\n%s - %s\n", tCard.Name, status)
-	_, _ = fmt.Fprintln(out, httpPrefix+tCard.Key+internal.ColorOff)
+func (t *task) String() string {
+	return fmt.Sprintf("%s%s - %s\n%s", t.Key, t.Name, t.Status, t.Link)
 }

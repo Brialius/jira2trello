@@ -29,3 +29,6 @@ test.yaml
 
 # Debug info
 debug_*.json
+
+# HTLM reports
+*.html
