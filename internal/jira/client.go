@@ -106,7 +106,7 @@ func (j *Client) GetUserTasks(jql string) (map[string]*Task, error) {
 	return res, nil
 }
 
-func (j *Client) writeToJSONFile(value interface{}, fileName string) {
+func (j *Client) writeToJSONFile(value any, fileName string) {
 	if j.Debug {
 		const filePermissions = 0600
 

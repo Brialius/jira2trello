@@ -1,19 +1,23 @@
 // Copyright © 2016 Aaron Longwell
 //
-// Use of this source code is governed by an MIT licese.
+// Use of this source code is governed by an MIT license.
 // Details in the LICENSE file.
 
 package trello
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"time"
 
 	"github.com/pkg/errors"
+	"golang.org/x/time/rate"
 )
 
 // DefaultBaseURL is the default API base url used by Client to send requests to Trello.
@@ -27,7 +31,7 @@ type Client struct {
 	BaseURL  string
 	Key      string
 	Token    string
-	throttle <-chan time.Time
+	throttle *rate.Limiter
 	testMode bool
 	ctx      context.Context
 }
@@ -39,12 +43,14 @@ type logger interface {
 // NewClient is a constructor for the Client. It takes the key and token credentials
 // of a Trello member to authenticate and authorise requests with.
 func NewClient(key, token string) *Client {
+	limit := rate.Every(time.Second / 8) // Actually 10/second, but we're extra cautious
+
 	return &Client{
 		Client:   http.DefaultClient,
 		BaseURL:  DefaultBaseURL,
 		Key:      key,
 		Token:    token,
-		throttle: time.Tick(time.Second / 8), // Actually 10/second, but we're extra cautious
+		throttle: rate.NewLimiter(limit, 1),
 		testMode: false,
 		ctx:      context.Background(),
 	}
@@ -61,7 +67,7 @@ func (c *Client) WithContext(ctx context.Context) *Client {
 // Throttle starts receiving throttles from throttle channel each ticker period.
 func (c *Client) Throttle() {
 	if !c.testMode {
-		<-c.throttle
+		c.throttle.Wait(c.ctx)
 	}
 }
 
@@ -156,6 +162,53 @@ func (c *Client) Post(path string, args Arguments, target interface{}) error {
 		return errors.Wrapf(err, "Invalid POST request %s", url)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	return c.do(req, url, target)
+}
+
+// PostWithBody takes a path, Arguments, and a target interface (e.g. Board or Card).
+// It runs a POST request on the Trello API endpoint with the path and uses
+// the Arguments as URL parameters, takes file io.Reader and put to multipart body.
+// Then it returns either the target interface
+// updated from the response or an error.
+func (c *Client) PostWithBody(path string, args Arguments, target interface{}, filename string, file io.Reader) error {
+
+	// Trello prohibits more than 10 seconds/second per token
+	c.Throttle()
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("file", filename)
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(part, file)
+	if err != nil {
+		return err
+	}
+	err = writer.Close()
+	if err != nil {
+		return err
+	}
+
+	params := args.ToURLValues()
+	c.log("[trello] POST %s?%s", path, params.Encode())
+
+	if c.Key != "" {
+		params.Set("key", c.Key)
+	}
+
+	if c.Token != "" {
+		params.Set("token", c.Token)
+	}
+
+	url := fmt.Sprintf("%s/%s", c.BaseURL, path)
+	urlWithParams := fmt.Sprintf("%s?%s", url, params.Encode())
+
+	req, err := http.NewRequest("POST", urlWithParams, body)
+	if err != nil {
+		return errors.Wrapf(err, "Invalid POST request %s", url)
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
 	return c.do(req, url, target)
 }
 

@@ -1,18 +1,32 @@
 // Copyright © 2016 Aaron Longwell
 //
-// Use of this source code is governed by an MIT licese.
+// Use of this source code is governed by an MIT license.
 // Details in the LICENSE file.
 
 package trello
 
 import (
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 )
+
+type CardBadges struct {
+	Votes              int        `json:"votes"`
+	ViewingMemberVoted bool       `json:"viewingMemberVoted"`
+	Subscribed         bool       `json:"subscribed"`
+	Fogbugz            string     `json:"fogbugz,omitempty"`
+	CheckItems         int        `json:"checkItems"`
+	CheckItemsChecked  int        `json:"checkItemsChecked"`
+	Comments           int        `json:"comments"`
+	Attachments        int        `json:"attachments"`
+	Description        bool       `json:"description"`
+	Due                *time.Time `json:"due,omitempty"`
+}
 
 // Card represents the card resource.
 // https://developers.trello.com/reference/#card-object
@@ -29,6 +43,7 @@ type Card struct {
 	ShortURL         string     `json:"shortUrl"`
 	URL              string     `json:"url"`
 	Desc             string     `json:"desc"`
+	Start            *time.Time `json:"start"`
 	Due              *time.Time `json:"due"`
 	DueComplete      bool       `json:"dueComplete"`
 	Closed           bool       `json:"closed"`
@@ -44,18 +59,7 @@ type Card struct {
 	IDList string `json:"idList"`
 
 	// Badges
-	Badges struct {
-		Votes              int        `json:"votes"`
-		ViewingMemberVoted bool       `json:"viewingMemberVoted"`
-		Subscribed         bool       `json:"subscribed"`
-		Fogbugz            string     `json:"fogbugz,omitempty"`
-		CheckItems         int        `json:"checkItems"`
-		CheckItemsChecked  int        `json:"checkItemsChecked"`
-		Comments           int        `json:"comments"`
-		Attachments        int        `json:"attachments"`
-		Description        bool       `json:"description"`
-		Due                *time.Time `json:"due,omitempty"`
-	} `json:"badges"`
+	Badges CardBadges `json:"badges"`
 
 	// Actions
 	Actions ActionCollection `json:"actions,omitempty"`
@@ -85,12 +89,50 @@ type Card struct {
 	customFieldMap *map[string]interface{}
 }
 
+// SetClient can be used to override this Card's internal connection to the
+// Trello API. Normally, this is set automatically after calls to GetCard()
+// from the Client or a List. This method is public to allow for situations
+// where a Card which wasn't created from an API call to be used as the basis
+// for other API calls. All nested structs (Actions, Attachments, Checklists,
+// etc) also have their client properties updated.
+//
+func (c *Card) SetClient(newClient *Client) {
+	c.client = newClient
+
+	if c.Board != nil && c.Board.client == nil {
+		c.Board.SetClient(newClient)
+	}
+
+	if c.List != nil && c.List.client == nil {
+		c.List.SetClient(newClient)
+	}
+
+	for _, action := range c.Actions {
+		action.SetClient(newClient)
+	}
+
+	for _, attachment := range c.Attachments {
+		attachment.SetClient(newClient)
+	}
+
+	for _, checklist := range c.Checklists {
+		checklist.SetClient(newClient)
+	}
+
+	for _, label := range c.Labels {
+		label.SetClient(newClient)
+	}
+
+	for _, member := range c.Members {
+		member.SetClient(newClient)
+	}
+}
+
 // CreatedAt returns the receiver card's created-at attribute as time.Time.
 func (c *Card) CreatedAt() time.Time {
 	t, _ := IDToTime(c.ID)
 	return t
 }
-
 
 // CustomFields returns the card's custom fields.
 func (c *Card) CustomFields(boardCustomFields []*CustomField) map[string]interface{} {
@@ -145,7 +187,8 @@ func (c *Card) CustomFields(boardCustomFields []*CustomField) map[string]interfa
 }
 
 // MoveToList moves a card to a list given by listID.
-func (c *Card) MoveToList(listID string, args Arguments) error {
+func (c *Card) MoveToList(listID string, extraArgs ...Arguments) error {
+	args := flattenArguments(extraArgs)
 	path := fmt.Sprintf("cards/%s", c.ID)
 	args["idList"] = listID
 	return c.client.Put(path, args, &c)
@@ -181,8 +224,7 @@ func (c *Card) RemoveIDLabel(labelID string, label *Label) error {
 // AddIDLabel receives a label id and adds the corresponding label or returns an error.
 func (c *Card) AddIDLabel(labelID string) error {
 	path := fmt.Sprintf("cards/%s/idLabels", c.ID)
-	err := c.client.Post(path, Arguments{"value": labelID}, &c.IDLabels)
-	return err
+	return c.client.Post(path, Arguments{"value": labelID}, &c.IDLabels)
 }
 
 // MoveToTopOfList moves the card to the top of it's list.
@@ -198,13 +240,30 @@ func (c *Card) MoveToBottomOfList() error {
 }
 
 // Update UPDATEs the card's attributes.
-func (c *Card) Update(args Arguments) error {
+func (c *Card) Update(extraArgs ...Arguments) error {
+	args := flattenArguments(extraArgs)
 	path := fmt.Sprintf("cards/%s", c.ID)
 	return c.client.Put(path, args, c)
 }
 
+// Archive archives the card.
+func (c *Card) Archive() error {
+	return c.Update(Arguments{"closed": "true"})
+}
+
+// Unarchive unarchives the card.
+func (c *Card) Unarchive() error {
+	return c.Update(Arguments{"closed": "false"})
+}
+
+// Delete deletes the card.
+func (c *Card) Delete() error {
+	path := fmt.Sprintf("cards/%s", c.ID)
+	return c.client.Delete(path, Defaults(), c)
+}
+
 // CreateCard takes a Card and Arguments and POSTs the card.
-func (c *Client) CreateCard(card *Card, extraArgs Arguments) error {
+func (c *Client) CreateCard(card *Card, extraArgs ...Arguments) error {
 	path := "cards"
 	args := Arguments{
 		"name":      card.Name,
@@ -217,19 +276,20 @@ func (c *Client) CreateCard(card *Card, extraArgs Arguments) error {
 	if card.Due != nil {
 		args["due"] = card.Due.Format(time.RFC3339)
 	}
-	// Allow overriding the creation position with 'top' or 'botttom'
-	if pos, ok := extraArgs["pos"]; ok {
-		args["pos"] = pos
+	if card.Start != nil {
+		args["start"] = card.Start.Format(time.RFC3339)
 	}
+
+	args.flatten(extraArgs)
 	err := c.Post(path, args, &card)
 	if err == nil {
-		card.client = c
+		card.SetClient(c)
 	}
 	return err
 }
 
 // AddCard takes a Card and Arguments and adds the card to the receiver list.
-func (l *List) AddCard(card *Card, extraArgs Arguments) error {
+func (l *List) AddCard(card *Card, extraArgs ...Arguments) error {
 	path := fmt.Sprintf("lists/%s/cards", l.ID)
 	args := Arguments{
 		"name":      card.Name,
@@ -240,13 +300,15 @@ func (l *List) AddCard(card *Card, extraArgs Arguments) error {
 	if card.Due != nil {
 		args["due"] = card.Due.Format(time.RFC3339)
 	}
-	// Allow overwriting the creation position with 'top' or 'bottom'
-	if pos, ok := extraArgs["pos"]; ok {
-		args["pos"] = pos
+	if card.Start != nil {
+		args["start"] = card.Start.Format(time.RFC3339)
 	}
+
+	args.flatten(extraArgs)
+
 	err := l.client.Post(path, args, &card)
 	if err == nil {
-		card.client = l.client
+		card.SetClient(l.client)
 	} else {
 		err = errors.Wrapf(err, "Error adding card to list %s", l.ID)
 	}
@@ -259,14 +321,17 @@ func (l *List) AddCard(card *Card, extraArgs Arguments) error {
 //	Arguments["keepFromSource"] = "all"
 //  Arguments["keepFromSource"] = "none"
 //	Arguments["keepFromSource"] = "attachments,checklists,comments"
-func (c *Card) CopyToList(listID string, args Arguments) (*Card, error) {
+func (c *Card) CopyToList(listID string, extraArgs ...Arguments) (*Card, error) {
+	args := Arguments{
+		"idList":       listID,
+		"idCardSource": c.ID,
+	}
 	path := "cards"
-	args["idList"] = listID
-	args["idCardSource"] = c.ID
 	newCard := Card{}
+	args.flatten(extraArgs)
 	err := c.client.Post(path, args, &newCard)
 	if err == nil {
-		newCard.client = c.client
+		newCard.SetClient(c.client)
 	} else {
 		err = errors.Wrapf(err, "Error copying card '%s' to list '%s'.", c.ID, listID)
 	}
@@ -274,9 +339,12 @@ func (c *Card) CopyToList(listID string, args Arguments) (*Card, error) {
 }
 
 // AddComment takes a comment string and Arguments and adds the comment to the card.
-func (c *Card) AddComment(comment string, args Arguments) (*Action, error) {
+func (c *Card) AddComment(comment string, extraArgs ...Arguments) (*Action, error) {
+	args := Arguments{
+		"text": comment,
+	}
+	args.flatten(extraArgs)
 	path := fmt.Sprintf("cards/%s/actions/comments", c.ID)
-	args["text"] = comment
 	action := Action{}
 	err := c.client.Post(path, args, &action)
 	if err != nil {
@@ -286,12 +354,13 @@ func (c *Card) AddComment(comment string, args Arguments) (*Action, error) {
 }
 
 // AddURLAttachment takes an Attachment and adds it to the card.
-func (c *Card) AddURLAttachment(attachment *Attachment) error {
+func (c *Card) AddURLAttachment(attachment *Attachment, extraArgs ...Arguments) error {
 	path := fmt.Sprintf("cards/%s/attachments", c.ID)
 	args := Arguments{
 		"url":  attachment.URL,
 		"name": attachment.Name,
 	}
+	args.flatten(extraArgs)
 	err := c.client.Post(path, args, &attachment)
 	if err != nil {
 		err = errors.Wrapf(err, "Error adding attachment to card %s", c.ID)
@@ -300,12 +369,33 @@ func (c *Card) AddURLAttachment(attachment *Attachment) error {
 
 }
 
+// GetAttachments returns all attachments for a card
+func (c *Card) GetAttachments(args Arguments) (attachments []*Attachment, err error) {
+	path := fmt.Sprintf("cards/%s/attachments", c.ID)
+	c.client.Get(path, args, &attachments)
+	return
+}
+
+// AddFileAttachment takes an Attachment, filename with io.Reader and adds it to the card.
+func (c *Card) AddFileAttachment(attachment *Attachment, filename string, file io.Reader, extraArgs ...Arguments) error {
+	path := fmt.Sprintf("cards/%s/attachments", c.ID)
+	args := Arguments{
+		"name": attachment.Name,
+	}
+	args.flatten(extraArgs)
+	err := c.client.PostWithBody(path, args, &attachment, filename, file)
+	if err != nil {
+		err = errors.Wrapf(err, "Error adding attachment to card %s", c.ID)
+	}
+	return err
+}
+
 // GetParentCard retrieves the originating Card if the Card was created
 // from a copy of another Card. Returns an error only when a low-level failure occurred.
 // If this Card has no parent, a nil card and nil error are returned. In other words, the
 // non-existence of a parent is not treated as an error.
-func (c *Card) GetParentCard(args Arguments) (*Card, error) {
-
+func (c *Card) GetParentCard(extraArgs ...Arguments) (*Card, error) {
+	args := flattenArguments(extraArgs)
 	// Hopefully the card came pre-loaded with Actions including the card creation
 	action := c.Actions.FirstCardCreateAction()
 
@@ -329,8 +419,8 @@ func (c *Card) GetParentCard(args Arguments) (*Card, error) {
 }
 
 // GetAncestorCards takes Arguments, GETs the card's ancestors and returns them as a slice.
-func (c *Card) GetAncestorCards(args Arguments) (ancestors []*Card, err error) {
-
+func (c *Card) GetAncestorCards(extraArgs ...Arguments) (ancestors []*Card, err error) {
+	args := flattenArguments(extraArgs)
 	// Get the first parent
 	parent, err := c.GetParentCard(args)
 	if IsNotFound(err) || IsPermissionDenied(err) {
@@ -353,7 +443,8 @@ func (c *Card) GetAncestorCards(args Arguments) (ancestors []*Card, err error) {
 }
 
 // GetOriginatingCard takes Arguments, GETs ancestors and returns most recent ancestor card of the Card.
-func (c *Card) GetOriginatingCard(args Arguments) (*Card, error) {
+func (c *Card) GetOriginatingCard(extraArgs ...Arguments) (*Card, error) {
+	args := flattenArguments(extraArgs)
 	ancestors, err := c.GetAncestorCards(args)
 	if err != nil {
 		return c, err
@@ -413,8 +504,11 @@ func (c *Card) CreatorMemberID() (string, error) {
 
 // ContainsCopyOfCard accepts a card id and Arguments and returns true
 // if the receiver Board contains a Card with the id.
-func (b *Board) ContainsCopyOfCard(cardID string, args Arguments) (bool, error) {
-	args["filter"] = "copyCard"
+func (b *Board) ContainsCopyOfCard(cardID string, extraArgs ...Arguments) (bool, error) {
+	args := Arguments{
+		"filter": "copyCard",
+	}
+	args.flatten(extraArgs)
 	actions, err := b.GetActions(args)
 	if err != nil {
 		err := errors.Wrapf(err, "GetCards() failed inside ContainsCopyOf() for board '%s' and card '%s'.", b.ID, cardID)
@@ -431,7 +525,8 @@ func (b *Board) ContainsCopyOfCard(cardID string, args Arguments) (bool, error) 
 // GetCard receives a card id and Arguments and returns the card if found
 // with the credentials given for the receiver Client. Returns an error
 // otherwise.
-func (c *Client) GetCard(cardID string, args Arguments) (card *Card, err error) {
+func (c *Client) GetCard(cardID string, extraArgs ...Arguments) (card *Card, err error) {
+	args := flattenArguments(extraArgs)
 	path := fmt.Sprintf("cards/%s", cardID)
 	err = c.Get(path, args, &card)
 	if card != nil {
@@ -441,7 +536,8 @@ func (c *Client) GetCard(cardID string, args Arguments) (card *Card, err error) 
 }
 
 // GetCards takes Arguments and retrieves all Cards on a Board as slice or returns error.
-func (b *Board) GetCards(args Arguments) (cards []*Card, err error) {
+func (b *Board) GetCards(extraArgs ...Arguments) (cards []*Card, err error) {
+	args := flattenArguments(extraArgs)
 	path := fmt.Sprintf("boards/%s/cards", b.ID)
 
 	err = b.client.Get(path, args, &cards)
@@ -450,7 +546,7 @@ func (b *Board) GetCards(args Arguments) (cards []*Card, err error) {
 	// cards, we begin
 	if len(cards) > 0 {
 		moreCards := true
-		for moreCards == true {
+		for moreCards {
 			nextCardBatch := make([]*Card, 0)
 			args["before"] = earliestCardID(cards)
 			err = b.client.Get(path, args, &nextCardBatch)
@@ -463,18 +559,19 @@ func (b *Board) GetCards(args Arguments) (cards []*Card, err error) {
 	}
 
 	for i := range cards {
-		cards[i].client = b.client
+		cards[i].SetClient(b.client)
 	}
 
 	return
 }
 
 // GetCards retrieves all Cards in a List or an error if something goes wrong.
-func (l *List) GetCards(args Arguments) (cards []*Card, err error) {
+func (l *List) GetCards(extraArgs ...Arguments) (cards []*Card, err error) {
+	args := flattenArguments(extraArgs)
 	path := fmt.Sprintf("lists/%s/cards", l.ID)
 	err = l.client.Get(path, args, &cards)
 	for i := range cards {
-		cards[i].client = l.client
+		cards[i].SetClient(l.client)
 	}
 	return
 }

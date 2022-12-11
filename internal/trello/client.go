@@ -146,7 +146,7 @@ func (t *Client) GetUserJiraCards() ([]*Card, error) {
 	return res, nil
 }
 
-func (t *Client) writeToJSONFile(value interface{}, fileName string) {
+func (t *Client) writeToJSONFile(value any, fileName string) {
 	if t.Debug {
 		const filePermissions = 0600
 
@@ -199,7 +199,6 @@ func (t *Client) SetBoard() error {
 		return err
 	}
 
-	fmt.Printf("Using board: %s\n", board.Name)
 	t.board = board
 
 	return nil

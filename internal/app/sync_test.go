@@ -28,7 +28,7 @@ import (
 	"github.com/Brialius/jira2trello/internal/trello"
 	"github.com/mattn/go-colorable"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
+	"os"
 	"sort"
 	"testing"
 )
@@ -94,8 +94,8 @@ ToDo                     Sub-task     JIRA1-1324     Task name 1324     21 Aug 2
 	}
 }
 
-func mustLoadJSONFile(t *testing.T, file string, variable interface{}) []byte {
-	testFileContent, err := ioutil.ReadFile(file)
+func mustLoadJSONFile(t *testing.T, file string, variable any) []byte {
+	testFileContent, err := os.ReadFile(file)
 	require.NoError(t, err)
 
 	err = json.Unmarshal(testFileContent, &variable)
