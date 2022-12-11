@@ -48,7 +48,7 @@ type task struct {
 }
 
 type report struct {
-	HtmlReport bool
+	HTMLReport bool
 	Tasks      []*task
 	WeekNumber int
 	Year       int
@@ -56,17 +56,18 @@ type report struct {
 
 func newReport(htmlReport bool, tasks []*task) *report {
 	year, week := time.Now().ISOWeek()
+
 	return &report{
-		HtmlReport: htmlReport,
+		HTMLReport: htmlReport,
 		Tasks:      tasks,
 		WeekNumber: week,
 		Year:       year,
 	}
 }
 
-// Generate report
+// Generate report.
 func (r *report) generate(out io.Writer) {
-	if r.HtmlReport {
+	if r.HTMLReport {
 		t := template.Must(template.New("report").Parse(htmlTemplate))
 		err := t.Execute(out, r)
 
@@ -86,7 +87,7 @@ func (r *report) generate(out io.Writer) {
 	_, _ = fmt.Fprintln(out, "\n----------------------------------")
 }
 
-func Report(tCli TrelloConnector, jiraURL string, reportHtml bool) {
+func Report(tCli TrelloConnector, jiraURL string, reportHTML bool) {
 	if err := tCli.Connect(); err != nil {
 		log.Fatalf("Can't connect to trello: %s", err)
 	}
@@ -98,22 +99,23 @@ func Report(tCli TrelloConnector, jiraURL string, reportHtml bool) {
 
 	tasks := trelloTasks(tCards, tCli, jiraURL)
 
-	newReport(reportHtml, tasks).generate(getOutputWriter(reportHtml))
+	newReport(reportHTML, tasks).generate(getOutputWriter(reportHTML))
 }
 
 // Determine destination writer
-// depends on html report flag
+// depends on html report flag.
 func getOutputWriter(html bool) io.Writer {
 	if html {
-		f, err := os.OpenFile("jira2trello-report.html", os.O_CREATE|os.O_WRONLY, 0644)
+		//nolint:gomnd,nosnakecase
+		reportFile, err := os.OpenFile("jira2trello-report.html", os.O_CREATE|os.O_WRONLY, 0644)
 
 		if err != nil {
 			log.Fatalf("can't create report file: %s", err)
 		}
 
-		fmt.Printf("Report saved to %s\n", f.Name())
+		fmt.Printf("Report saved to %s\n", reportFile.Name())
 
-		return f
+		return reportFile
 	}
 
 	return colorable.NewColorableStdout()

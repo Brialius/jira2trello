@@ -8,7 +8,7 @@ import (
 )
 
 func DoSelfUpdate(currentVersion string) {
-	v := semver.MustParse(strings.TrimPrefix(currentVersion, "v"))
+	ver := semver.MustParse(strings.TrimPrefix(currentVersion, "v"))
 
 	slug := "Brialius/jira2trello"
 	latest, found, err := selfupdate.DetectLatest(slug)
@@ -19,18 +19,18 @@ func DoSelfUpdate(currentVersion string) {
 		return
 	}
 
-	if latest.Version.Equals(v) {
+	if latest.Version.Equals(ver) {
 		// latest version is the same as current version. It means current binary is up-to-date.
 		fmt.Println("Current binary is the latest version:", currentVersion)
 
 		return
 	}
 
-	if found && latest.Version.GT(v) {
+	if found && latest.Version.GT(ver) {
 		fmt.Printf("New version found: %s\n", latest.Version)
 		fmt.Println("Updating...")
 
-		_, err := selfupdate.UpdateSelf(v, slug)
+		_, err := selfupdate.UpdateSelf(ver, slug)
 
 		if err != nil {
 			fmt.Println("Binary update failed:", err)

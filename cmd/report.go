@@ -30,7 +30,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var reportHtml bool
+var reportHTML bool
 
 // reportCmd represents the report command.
 var reportCmd = &cobra.Command{
@@ -45,11 +45,11 @@ var reportCmd = &cobra.Command{
 
 		tCfg.Debug = Debug
 
-		app.Report(trello.NewClient(&tCfg), viper.GetString("jira.url"), reportHtml)
+		app.Report(trello.NewClient(&tCfg), viper.GetString("jira.url"), reportHTML)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(reportCmd)
-	reportCmd.Flags().BoolVar(&reportHtml, "html", false, "generate html report")
+	reportCmd.Flags().BoolVar(&reportHTML, "html", false, "generate html report")
 }

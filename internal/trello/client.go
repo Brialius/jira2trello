@@ -25,7 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/adlio/trello"
-	"io/ioutil"
+	"os"
 	"strings"
 )
 
@@ -150,8 +150,9 @@ func (t *Client) writeToJSONFile(value any, fileName string) {
 	if t.Debug {
 		const filePermissions = 0600
 
+		//nolint:errchkjson
 		b, _ := json.MarshalIndent(value, "", "  ")
-		err := ioutil.WriteFile(fileName, b, filePermissions)
+		err := os.WriteFile(fileName, b, filePermissions)
 
 		if err != nil {
 			fmt.Printf("can't write debug file: %s", err)
