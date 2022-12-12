@@ -25,7 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/andygrunwald/go-jira"
-	"io/ioutil"
+	"os"
 	"time"
 )
 
@@ -106,12 +106,13 @@ func (j *Client) GetUserTasks(jql string) (map[string]*Task, error) {
 	return res, nil
 }
 
-func (j *Client) writeToJSONFile(value interface{}, fileName string) {
+func (j *Client) writeToJSONFile(value any, fileName string) {
 	if j.Debug {
 		const filePermissions = 0600
 
+		//nolint:errchkjson
 		b, _ := json.MarshalIndent(value, "", "  ")
-		err := ioutil.WriteFile(fileName, b, filePermissions)
+		err := os.WriteFile(fileName, b, filePermissions)
 
 		if err != nil {
 			fmt.Printf("can't write debug file: %s", err)

@@ -160,6 +160,19 @@ A board can be created or deleted on the `Board` struct for the user whose crede
   }
 ```
 
+## Archiving, Unarchiving & Deleting a Card
+
+```Go
+// archive
+err := card.Archive()
+
+// unarchive
+err := card.Unarchive()
+
+// delete
+err := card.Delete()
+```
+
 ## Creating a Card
 
 The API provides several mechanisms for creating new cards.

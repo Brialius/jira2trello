@@ -1,6 +1,6 @@
 // Copyright © 2016 Aaron Longwell
 //
-// Use of this source code is governed by an MIT licese.
+// Use of this source code is governed by an MIT license.
 // Details in the LICENSE file.
 
 package trello
@@ -14,6 +14,7 @@ import (
 // Actions are immutable event traces generated whenever an action occurs in Trello.
 // See https://developers.trello.com/reference/#actions.
 type Action struct {
+	client          *Client
 	ID              string      `json:"id"`
 	IDMemberCreator string      `json:"idMemberCreator"`
 	Type            string      `json:"type"`
@@ -50,23 +51,35 @@ type ActionDataCard struct {
 }
 
 // GetActions make a GET call for a board's actions
-func (b *Board) GetActions(args Arguments) (actions ActionCollection, err error) {
+func (b *Board) GetActions(extraArgs ...Arguments) (actions ActionCollection, err error) {
+	args := flattenArguments(extraArgs)
 	path := fmt.Sprintf("boards/%s/actions", b.ID)
 	err = b.client.Get(path, args, &actions)
+	for _, action := range actions {
+		action.SetClient(b.client)
+	}
 	return
 }
 
 // GetActions makes a GET call for a list's actions
-func (l *List) GetActions(args Arguments) (actions ActionCollection, err error) {
+func (l *List) GetActions(extraArgs ...Arguments) (actions ActionCollection, err error) {
+	args := flattenArguments(extraArgs)
 	path := fmt.Sprintf("lists/%s/actions", l.ID)
 	err = l.client.Get(path, args, &actions)
+	for _, action := range actions {
+		action.SetClient(l.client)
+	}
 	return
 }
 
 // GetActions makes a GET for a card's actions
-func (c *Card) GetActions(args Arguments) (actions ActionCollection, err error) {
+func (c *Card) GetActions(extraArgs ...Arguments) (actions ActionCollection, err error) {
+	args := flattenArguments(extraArgs)
 	path := fmt.Sprintf("cards/%s/actions", c.ID)
 	err = c.client.Get(path, args, &actions)
+	for _, action := range actions {
+		action.SetClient(c.client)
+	}
 	return
 }
 
@@ -87,6 +100,20 @@ func (c *Card) GetMembershipChangeActions() (actions ActionCollection, err error
 	// We include updateCard:closed as if the member is implicitly removed from the card when it's closed.
 	// This allows us to "close out" the duration length.
 	return c.GetActions(Arguments{"filter": "addMemberToCard,removeMemberFromCard,updateCard:closed"})
+}
+
+// GetCommentActions return only comment actions
+func (c *Card) GetCommentActions() (actions ActionCollection, err error) {
+	return c.GetActions(Arguments{"filter": "commentCard"})
+}
+
+// GetLastCommentAction return only last comment action
+func (c *Card) GetLastCommentAction() (*Action, error) {
+	actions, err := c.GetCommentActions()
+	if err != nil {
+		return nil, err
+	}
+	return actions.LastCommentAction(), nil
 }
 
 // DidCreateCard returns true if this action created a card, false otherwise.
@@ -144,6 +171,22 @@ func (a *Action) DidChangeCardMembership() bool {
 	default:
 		return false
 	}
+}
+
+// DidCommentCard returns true if card was commented
+func (a *Action) DidCommentCard() bool {
+	switch a.Type {
+	case "commentCard":
+		return true
+	default:
+		return false
+	}
+}
+
+// SetClient can be used to override this Action's internal connection to
+// the Trello API. Normally, this is set automatically after API calls.
+func (a *Action) SetClient(newClient *Client) {
+	a.client = newClient
 }
 
 // ListAfterAction calculates which List the card ended up in after this action

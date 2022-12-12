@@ -1,6 +1,6 @@
 // Copyright © 2016 Aaron Longwell
 //
-// Use of this source code is governed by an MIT licese.
+// Use of this source code is governed by an MIT license.
 // Details in the LICENSE file.
 
 package trello
@@ -8,7 +8,9 @@ package trello
 // Attachment represent the attachments of cards. This is a nested resource of Card.
 // https://developers.trello.com/reference/#attachments
 type Attachment struct {
+	client    *Client
 	ID        string              `json:"id"`
+	Card      *Card               `json:"-"`
 	Name      string              `json:"name"`
 	Pos       float32             `json:"pos"`
 	Bytes     int                 `json:"int"`
@@ -29,4 +31,10 @@ type AttachmentPreview struct {
 	Height int    `json:"height"`
 	Bytes  int    `json:"bytes"`
 	Scaled bool   `json:"scaled"`
+}
+
+// SetClient can be used to override this Attachment's internal connection to
+// the Trello API. Normally, this is set automatically after API calls.
+func (a *Attachment) SetClient(newClient *Client) {
+	a.client = newClient
 }
