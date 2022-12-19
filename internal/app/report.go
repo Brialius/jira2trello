@@ -30,6 +30,7 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -98,16 +99,21 @@ func Report(tCli TrelloConnector, jiraURL string, reportHTML bool) {
 	}
 
 	tasks := trelloTasks(tCards, tCli, jiraURL)
+	r := newReport(reportHTML, tasks)
 
-	newReport(reportHTML, tasks).generate(getOutputWriter(reportHTML))
+	r.generate(r.getOutputWriter())
 }
 
 // Determine destination writer
 // depends on html report flag.
-func getOutputWriter(html bool) io.Writer {
-	if html {
+func (r *report) getOutputWriter() io.Writer {
+	year := strconv.Itoa(r.Year)
+	week := strconv.Itoa(r.WeekNumber)
+
+	if r.HTMLReport {
 		//nolint:gomnd,nosnakecase
-		reportFile, err := os.OpenFile("jira2trello-report.html", os.O_CREATE|os.O_WRONLY, 0644)
+		reportFile, err := os.OpenFile("jira2trello-report-"+year+"-"+week+".html",
+			os.O_CREATE|os.O_WRONLY, 0644)
 
 		if err != nil {
 			log.Fatalf("can't create report file: %s", err)
