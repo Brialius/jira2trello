@@ -15,4 +15,5 @@ type TrelloConnector interface {
 	UpdateCardLabels(string, string) error
 	SetBoard() error
 	GetConfig() *trello.Config
+	ArchiveAllCardsInList(string) error
 }

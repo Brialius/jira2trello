@@ -219,3 +219,21 @@ func (t *Client) GetSelfMemberID() (string, error) {
 func (t *Client) GetConfig() *Config {
 	return t.Config
 }
+
+func (t *Client) ArchiveAllCardsInList(listID string) error {
+	cards, err := t.board.GetCards(trello.Defaults())
+
+	if err != nil {
+		return err
+	}
+
+	for _, card := range cards {
+		if card.IDList == listID {
+			if err := card.Archive(); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}

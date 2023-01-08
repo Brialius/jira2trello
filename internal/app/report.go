@@ -102,6 +102,15 @@ func Report(tCli TrelloConnector, jiraURL string, reportHTML bool) {
 	r := newReport(reportHTML, tasks)
 
 	r.generate(r.getOutputWriter())
+
+	// Archive done tasks if HTML report is generated.
+	if reportHTML {
+		if err := tCli.ArchiveAllCardsInList(tCli.GetConfig().Lists.Done); err != nil {
+			log.Fatalf("can't archive done cards: %s", err)
+		}
+
+		fmt.Println("Done cards archived")
+	}
 }
 
 // Determine destination writer

@@ -4,7 +4,8 @@ VERSION ?= $(shell git describe --tags --always --match=v* || echo v0)
 LDFLAGS=-ldflags "-X=main.version=$(VERSION)"
 LINTERFLAGS=--enable-all --disable gochecknoinits --disable gochecknoglobals --disable goimports --disable gci \
 --disable gofumpt --disable interfacer --disable maligned --disable forbidigo --disable exhaustivestruct \
---disable cyclop --disable wrapcheck --disable godox --disable exhaustruct --out-format=tab --tests=false
+--disable cyclop --disable wrapcheck --disable godox --disable exhaustruct --disable interfacebloat \
+--out-format=tab --tests=false
 BUILDFLAGS=-mod vendor $(LDFLAGS)
 GOEXE := $(shell go env GOEXE)
 GOPATH := $(shell go env GOPATH)

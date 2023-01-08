@@ -14,47 +14,53 @@ var _ TrelloConnector = &TrelloConnectorMock{}
 
 // TrelloConnectorMock is a mock implementation of TrelloConnector.
 //
-// 	func TestSomethingThatUsesTrelloConnector(t *testing.T) {
+//	func TestSomethingThatUsesTrelloConnector(t *testing.T) {
 //
-// 		// make and configure a mocked TrelloConnector
-// 		mockedTrelloConnector := &TrelloConnectorMock{
-// 			ConnectFunc: func() error {
-// 				panic("mock out the Connect method")
-// 			},
-// 			CreateCardFunc: func(card *trello.Card) error {
-// 				panic("mock out the CreateCard method")
-// 			},
-// 			GetBoardsFunc: func() (map[string]*trello.Board, error) {
-// 				panic("mock out the GetBoards method")
-// 			},
-// 			GetConfigFunc: func() *trello.Config {
-// 				panic("mock out the GetConfig method")
-// 			},
-// 			GetLabelsFunc: func() (map[string]*trello.Label, error) {
-// 				panic("mock out the GetLabels method")
-// 			},
-// 			GetListsFunc: func() (map[string]*trello.List, error) {
-// 				panic("mock out the GetLists method")
-// 			},
-// 			GetUserJiraCardsFunc: func() ([]*trello.Card, error) {
-// 				panic("mock out the GetUserJiraCards method")
-// 			},
-// 			MoveCardToListFunc: func(s1 string, s2 string) error {
-// 				panic("mock out the MoveCardToList method")
-// 			},
-// 			SetBoardFunc: func() error {
-// 				panic("mock out the SetBoard method")
-// 			},
-// 			UpdateCardLabelsFunc: func(s1 string, s2 string) error {
-// 				panic("mock out the UpdateCardLabels method")
-// 			},
-// 		}
+//		// make and configure a mocked TrelloConnector
+//		mockedTrelloConnector := &TrelloConnectorMock{
+//			ArchiveAllCardsInListFunc: func(s string) error {
+//				panic("mock out the ArchiveAllCardsInList method")
+//			},
+//			ConnectFunc: func() error {
+//				panic("mock out the Connect method")
+//			},
+//			CreateCardFunc: func(card *trello.Card) error {
+//				panic("mock out the CreateCard method")
+//			},
+//			GetBoardsFunc: func() (map[string]*trello.Board, error) {
+//				panic("mock out the GetBoards method")
+//			},
+//			GetConfigFunc: func() *trello.Config {
+//				panic("mock out the GetConfig method")
+//			},
+//			GetLabelsFunc: func() (map[string]*trello.Label, error) {
+//				panic("mock out the GetLabels method")
+//			},
+//			GetListsFunc: func() (map[string]*trello.List, error) {
+//				panic("mock out the GetLists method")
+//			},
+//			GetUserJiraCardsFunc: func() ([]*trello.Card, error) {
+//				panic("mock out the GetUserJiraCards method")
+//			},
+//			MoveCardToListFunc: func(s1 string, s2 string) error {
+//				panic("mock out the MoveCardToList method")
+//			},
+//			SetBoardFunc: func() error {
+//				panic("mock out the SetBoard method")
+//			},
+//			UpdateCardLabelsFunc: func(s1 string, s2 string) error {
+//				panic("mock out the UpdateCardLabels method")
+//			},
+//		}
 //
-// 		// use mockedTrelloConnector in code that requires TrelloConnector
-// 		// and then make assertions.
+//		// use mockedTrelloConnector in code that requires TrelloConnector
+//		// and then make assertions.
 //
-// 	}
+//	}
 type TrelloConnectorMock struct {
+	// ArchiveAllCardsInListFunc mocks the ArchiveAllCardsInList method.
+	ArchiveAllCardsInListFunc func(s string) error
+
 	// ConnectFunc mocks the Connect method.
 	ConnectFunc func() error
 
@@ -87,6 +93,11 @@ type TrelloConnectorMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// ArchiveAllCardsInList holds details about calls to the ArchiveAllCardsInList method.
+		ArchiveAllCardsInList []struct {
+			// S is the s argument value.
+			S string
+		}
 		// Connect holds details about calls to the Connect method.
 		Connect []struct {
 		}
@@ -128,16 +139,49 @@ type TrelloConnectorMock struct {
 			S2 string
 		}
 	}
-	lockConnect          sync.RWMutex
-	lockCreateCard       sync.RWMutex
-	lockGetBoards        sync.RWMutex
-	lockGetConfig        sync.RWMutex
-	lockGetLabels        sync.RWMutex
-	lockGetLists         sync.RWMutex
-	lockGetUserJiraCards sync.RWMutex
-	lockMoveCardToList   sync.RWMutex
-	lockSetBoard         sync.RWMutex
-	lockUpdateCardLabels sync.RWMutex
+	lockArchiveAllCardsInList sync.RWMutex
+	lockConnect               sync.RWMutex
+	lockCreateCard            sync.RWMutex
+	lockGetBoards             sync.RWMutex
+	lockGetConfig             sync.RWMutex
+	lockGetLabels             sync.RWMutex
+	lockGetLists              sync.RWMutex
+	lockGetUserJiraCards      sync.RWMutex
+	lockMoveCardToList        sync.RWMutex
+	lockSetBoard              sync.RWMutex
+	lockUpdateCardLabels      sync.RWMutex
+}
+
+// ArchiveAllCardsInList calls ArchiveAllCardsInListFunc.
+func (mock *TrelloConnectorMock) ArchiveAllCardsInList(s string) error {
+	if mock.ArchiveAllCardsInListFunc == nil {
+		panic("TrelloConnectorMock.ArchiveAllCardsInListFunc: method is nil but TrelloConnector.ArchiveAllCardsInList was just called")
+	}
+	callInfo := struct {
+		S string
+	}{
+		S: s,
+	}
+	mock.lockArchiveAllCardsInList.Lock()
+	mock.calls.ArchiveAllCardsInList = append(mock.calls.ArchiveAllCardsInList, callInfo)
+	mock.lockArchiveAllCardsInList.Unlock()
+	return mock.ArchiveAllCardsInListFunc(s)
+}
+
+// ArchiveAllCardsInListCalls gets all the calls that were made to ArchiveAllCardsInList.
+// Check the length with:
+//
+//	len(mockedTrelloConnector.ArchiveAllCardsInListCalls())
+func (mock *TrelloConnectorMock) ArchiveAllCardsInListCalls() []struct {
+	S string
+} {
+	var calls []struct {
+		S string
+	}
+	mock.lockArchiveAllCardsInList.RLock()
+	calls = mock.calls.ArchiveAllCardsInList
+	mock.lockArchiveAllCardsInList.RUnlock()
+	return calls
 }
 
 // Connect calls ConnectFunc.
@@ -155,7 +199,8 @@ func (mock *TrelloConnectorMock) Connect() error {
 
 // ConnectCalls gets all the calls that were made to Connect.
 // Check the length with:
-//     len(mockedTrelloConnector.ConnectCalls())
+//
+//	len(mockedTrelloConnector.ConnectCalls())
 func (mock *TrelloConnectorMock) ConnectCalls() []struct {
 } {
 	var calls []struct {
@@ -184,7 +229,8 @@ func (mock *TrelloConnectorMock) CreateCard(card *trello.Card) error {
 
 // CreateCardCalls gets all the calls that were made to CreateCard.
 // Check the length with:
-//     len(mockedTrelloConnector.CreateCardCalls())
+//
+//	len(mockedTrelloConnector.CreateCardCalls())
 func (mock *TrelloConnectorMock) CreateCardCalls() []struct {
 	Card *trello.Card
 } {
@@ -212,7 +258,8 @@ func (mock *TrelloConnectorMock) GetBoards() (map[string]*trello.Board, error) {
 
 // GetBoardsCalls gets all the calls that were made to GetBoards.
 // Check the length with:
-//     len(mockedTrelloConnector.GetBoardsCalls())
+//
+//	len(mockedTrelloConnector.GetBoardsCalls())
 func (mock *TrelloConnectorMock) GetBoardsCalls() []struct {
 } {
 	var calls []struct {
@@ -238,7 +285,8 @@ func (mock *TrelloConnectorMock) GetConfig() *trello.Config {
 
 // GetConfigCalls gets all the calls that were made to GetConfig.
 // Check the length with:
-//     len(mockedTrelloConnector.GetConfigCalls())
+//
+//	len(mockedTrelloConnector.GetConfigCalls())
 func (mock *TrelloConnectorMock) GetConfigCalls() []struct {
 } {
 	var calls []struct {
@@ -264,7 +312,8 @@ func (mock *TrelloConnectorMock) GetLabels() (map[string]*trello.Label, error) {
 
 // GetLabelsCalls gets all the calls that were made to GetLabels.
 // Check the length with:
-//     len(mockedTrelloConnector.GetLabelsCalls())
+//
+//	len(mockedTrelloConnector.GetLabelsCalls())
 func (mock *TrelloConnectorMock) GetLabelsCalls() []struct {
 } {
 	var calls []struct {
@@ -290,7 +339,8 @@ func (mock *TrelloConnectorMock) GetLists() (map[string]*trello.List, error) {
 
 // GetListsCalls gets all the calls that were made to GetLists.
 // Check the length with:
-//     len(mockedTrelloConnector.GetListsCalls())
+//
+//	len(mockedTrelloConnector.GetListsCalls())
 func (mock *TrelloConnectorMock) GetListsCalls() []struct {
 } {
 	var calls []struct {
@@ -316,7 +366,8 @@ func (mock *TrelloConnectorMock) GetUserJiraCards() ([]*trello.Card, error) {
 
 // GetUserJiraCardsCalls gets all the calls that were made to GetUserJiraCards.
 // Check the length with:
-//     len(mockedTrelloConnector.GetUserJiraCardsCalls())
+//
+//	len(mockedTrelloConnector.GetUserJiraCardsCalls())
 func (mock *TrelloConnectorMock) GetUserJiraCardsCalls() []struct {
 } {
 	var calls []struct {
@@ -347,7 +398,8 @@ func (mock *TrelloConnectorMock) MoveCardToList(s1 string, s2 string) error {
 
 // MoveCardToListCalls gets all the calls that were made to MoveCardToList.
 // Check the length with:
-//     len(mockedTrelloConnector.MoveCardToListCalls())
+//
+//	len(mockedTrelloConnector.MoveCardToListCalls())
 func (mock *TrelloConnectorMock) MoveCardToListCalls() []struct {
 	S1 string
 	S2 string
@@ -377,7 +429,8 @@ func (mock *TrelloConnectorMock) SetBoard() error {
 
 // SetBoardCalls gets all the calls that were made to SetBoard.
 // Check the length with:
-//     len(mockedTrelloConnector.SetBoardCalls())
+//
+//	len(mockedTrelloConnector.SetBoardCalls())
 func (mock *TrelloConnectorMock) SetBoardCalls() []struct {
 } {
 	var calls []struct {
@@ -408,7 +461,8 @@ func (mock *TrelloConnectorMock) UpdateCardLabels(s1 string, s2 string) error {
 
 // UpdateCardLabelsCalls gets all the calls that were made to UpdateCardLabels.
 // Check the length with:
-//     len(mockedTrelloConnector.UpdateCardLabelsCalls())
+//
+//	len(mockedTrelloConnector.UpdateCardLabelsCalls())
 func (mock *TrelloConnectorMock) UpdateCardLabelsCalls() []struct {
 	S1 string
 	S2 string

@@ -51,5 +51,6 @@ var reportCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(reportCmd)
-	reportCmd.Flags().BoolVar(&reportHTML, "html", false, "generate html report")
+	reportCmd.Flags().BoolVar(&reportHTML, "html", false,
+		"generate html report and archive done cards")
 }
