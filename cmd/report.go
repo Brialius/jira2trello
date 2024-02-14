@@ -23,6 +23,7 @@ package cmd
 
 import (
 	"github.com/Brialius/jira2trello/internal/app"
+	"github.com/Brialius/jira2trello/internal/jira"
 	"github.com/Brialius/jira2trello/internal/trello"
 	"github.com/spf13/viper"
 	"log"
@@ -31,6 +32,7 @@ import (
 )
 
 var reportHTML bool
+var reportWeekly bool
 
 // reportCmd represents the report command.
 var reportCmd = &cobra.Command{
@@ -39,13 +41,18 @@ var reportCmd = &cobra.Command{
 	Long:  "Report based on trello cards",
 	Run: func(cmd *cobra.Command, args []string) {
 		var tCfg trello.Config
+		var jCfg jira.Config
+
 		if err := viper.UnmarshalKey("trello", &tCfg); err != nil {
 			log.Fatalf("Can't parse Trello config: %s", err)
+		}
+		if err := viper.UnmarshalKey("jira", &jCfg); err != nil {
+			log.Fatalf("Can't parse Jira config: %s", err)
 		}
 
 		tCfg.Debug = Debug
 
-		app.Report(trello.NewClient(&tCfg), viper.GetString("jira.url"), reportHTML)
+		app.Report(trello.NewClient(&tCfg), jira.NewClient(&jCfg), viper.GetString("jira.url"), reportHTML, reportWeekly)
 	},
 }
 
@@ -53,4 +60,6 @@ func init() {
 	rootCmd.AddCommand(reportCmd)
 	reportCmd.Flags().BoolVar(&reportHTML, "html", false,
 		"generate html report and archive done cards")
+	reportCmd.Flags().BoolVar(&reportWeekly, "weekly", false,
+		"generate weekly report based on jira tasks")
 }

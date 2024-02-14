@@ -131,7 +131,7 @@ func (s *SyncService) syncTasks() error {
 
 		if tCard, ok := s.tCards[key]; !ok {
 			if err := s.addCardToList(jTask, listID, key, labels); err != nil {
-				return fmt.Errorf("can't add task to list: %w", err)
+				return fmt.Errorf("can't add Task to list: %w", err)
 			}
 		} else {
 			if err := s.updateCardLabels(tCard, labels); err != nil {

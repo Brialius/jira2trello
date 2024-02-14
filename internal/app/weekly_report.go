@@ -22,6 +22,7 @@ THE SOFTWARE.
 package app
 
 import (
+	"github.com/Brialius/jira2trello/internal/jira"
 	"github.com/mattn/go-colorable"
 	"log"
 )
@@ -31,12 +32,42 @@ func WeeklyReport(jCli JiraConnector) {
 		log.Fatalf("Can't connect to jira server: %s", err)
 	}
 
-	tasks, err := jCli.GetUserTasks("(status changed to closed after -7d " +
-		"OR status = \"In Dev / In Progress\" OR status = Dependency) " +
-		"AND (timespent != 0 OR issuetype = Story) ORDER BY priority DESC, updated DESC")
+	tasks, err := weeklyReportJiraTasks(jCli)
 	if err != nil {
 		log.Fatalf("Can't get jira tasks: %s", err)
 	}
 
 	printJiraTasks(colorable.NewColorableStdout(), tasks)
+}
+
+func weeklyReportJiraTasks(jCli JiraConnector) (map[string]*jira.Task, error) {
+	tasks, err := jCli.GetUserTasks("(resolutiondate > startOfDay(-7d) " +
+		"OR status not in (done, closed, close, resolved)) " +
+		"ORDER BY resolutiondate DESC")
+
+	return tasks, err
+}
+
+func WeeklyReportTasks(jCli JiraConnector) []*Task {
+	if err := jCli.Connect(); err != nil {
+		log.Fatalf("Can't connect to jira server: %s", err)
+	}
+
+	jTasks, err := weeklyReportJiraTasks(jCli)
+	if err != nil {
+		log.Fatalf("Can't get jira tasks: %s", err)
+	}
+
+	tasks := make([]*Task, 0, len(jTasks))
+
+	for _, jTask := range jTasks {
+		tasks = append(tasks, &Task{
+			Name:   jTask.Summary,
+			Status: jTask.Status,
+			Link:   jTask.Link,
+			Key:    jTask.Key,
+		})
+	}
+
+	return tasks
 }

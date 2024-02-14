@@ -9,7 +9,7 @@ Usage:
    Available Commands:
      configure     Ask configuration settings and save them to file
      help          Help about any command
-     report        Report based on trello cards
+     report        Report based on trello cards or jira query
      sync          Jira to Trello sync
      update        Update jira2trello
      weekly-report Weekly report based on jira query
