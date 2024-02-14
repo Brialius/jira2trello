@@ -23,7 +23,6 @@ package app
 
 import (
 	"fmt"
-	"github.com/Brialius/jira2trello/internal/trello"
 	"github.com/mattn/go-colorable"
 	"html/template"
 	"io"
@@ -41,7 +40,7 @@ const (
 	reviewString = "In review"
 )
 
-type task struct {
+type Task struct {
 	Name   string
 	Status string
 	Link   string
@@ -49,20 +48,22 @@ type task struct {
 }
 
 type report struct {
-	HTMLReport bool
-	Tasks      []*task
-	WeekNumber int
-	Year       int
+	HTMLReport   bool
+	WeeklyReport bool
+	Tasks        []*Task
+	WeekNumber   int
+	Year         int
 }
 
-func newReport(htmlReport bool, tasks []*task) *report {
+func newReport(htmlReport bool, weeklyReport bool, tasks []*Task) *report {
 	year, week := time.Now().ISOWeek()
 
 	return &report{
-		HTMLReport: htmlReport,
-		Tasks:      tasks,
-		WeekNumber: week,
-		Year:       year,
+		HTMLReport:   htmlReport,
+		WeeklyReport: weeklyReport,
+		Tasks:        tasks,
+		WeekNumber:   week,
+		Year:         year,
 	}
 }
 
@@ -88,23 +89,21 @@ func (r *report) generate(out io.Writer) {
 	_, _ = fmt.Fprintln(out, "\n----------------------------------")
 }
 
-func Report(tCli TrelloConnector, jiraURL string, reportHTML bool) {
-	if err := tCli.Connect(); err != nil {
-		log.Fatalf("Can't connect to trello: %s", err)
+func Report(tCli TrelloConnector, jCli JiraConnector, jiraURL string, reportHTML bool, reportWeekly bool) {
+	var tasks []*Task
+
+	if reportWeekly {
+		tasks = WeeklyReportTasks(jCli)
+	} else {
+		tasks = trelloTasks(tCli, jiraURL)
 	}
 
-	tCards, err := tCli.GetUserJiraCards()
-	if err != nil {
-		log.Fatalf("can't get trello cards: %s", err)
-	}
-
-	tasks := trelloTasks(tCards, tCli, jiraURL)
-	r := newReport(reportHTML, tasks)
+	r := newReport(reportHTML, reportWeekly, tasks)
 
 	r.generate(r.getOutputWriter())
 
 	// Archive done tasks if HTML report is generated.
-	if reportHTML {
+	if reportHTML && !reportWeekly {
 		if err := tCli.ArchiveAllCardsInList(tCli.GetConfig().Lists.Done); err != nil {
 			log.Fatalf("can't archive done cards: %s", err)
 		}
@@ -136,35 +135,44 @@ func (r *report) getOutputWriter() io.Writer {
 	return colorable.NewColorableStdout()
 }
 
-func trelloTasks(tCards []*trello.Card, tCli TrelloConnector, jiraURL string) []*task {
-	done := make([]*task, 0)
-	inProgress := make([]*task, 0)
-	inReview := make([]*task, 0)
+func trelloTasks(tCli TrelloConnector, jiraURL string) []*Task {
+	if err := tCli.Connect(); err != nil {
+		log.Fatalf("Can't connect to trello: %s", err)
+	}
+
+	tCards, err := tCli.GetUserJiraCards()
+	if err != nil {
+		log.Fatalf("can't get trello cards: %s", err)
+	}
+
+	done := make([]*Task, 0)
+	inProgress := make([]*Task, 0)
+	inReview := make([]*Task, 0)
 
 	sort.Slice(tCards, func(i, j int) bool {
 		return tCards[i].Key < tCards[j].Key
 	})
 
-	tasks := make([]*task, 0)
+	tasks := make([]*Task, 0)
 
 	for _, tCard := range tCards {
 		switch {
 		case tCard.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Done}):
-			done = append(done, &task{
+			done = append(done, &Task{
 				Name:   strings.TrimPrefix(tCard.Name, tCard.Key),
 				Status: doneString,
 				Link:   jiraURL + "/browse/" + tCard.Key,
 				Key:    tCard.Key,
 			})
 		case tCard.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Doing}):
-			inProgress = append(inProgress, &task{
+			inProgress = append(inProgress, &Task{
 				Name:   strings.TrimPrefix(tCard.Name, tCard.Key),
 				Status: doingString,
 				Link:   jiraURL + "/browse/" + tCard.Key,
 				Key:    tCard.Key,
 			})
 		case tCard.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Review}):
-			inReview = append(inReview, &task{
+			inReview = append(inReview, &Task{
 				Name:   strings.TrimPrefix(tCard.Name, tCard.Key),
 				Status: reviewString,
 				Link:   jiraURL + "/browse/" + tCard.Key,
@@ -180,6 +188,6 @@ func trelloTasks(tCards []*trello.Card, tCli TrelloConnector, jiraURL string) []
 	return tasks
 }
 
-func (t *task) String() string {
+func (t *Task) String() string {
 	return fmt.Sprintf("%s%s - %s\n%s", t.Key, t.Name, t.Status, t.Link)
 }

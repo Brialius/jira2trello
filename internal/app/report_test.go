@@ -15,8 +15,8 @@ func Test_printReport(t *testing.T) {
 
 	type args struct {
 		tCli   TrelloConnector
-		tCards []*trello.Card
 		html   bool
+		weekly bool
 	}
 	tests := []struct {
 		name    string
@@ -26,8 +26,7 @@ func Test_printReport(t *testing.T) {
 		{
 			name: "valid",
 			args: args{
-				tCli:   tCli,
-				tCards: tCards,
+				tCli: tCli,
 			},
 			wantOut: `
 ----------------------------------
@@ -95,9 +94,8 @@ https://jira-site/browse/JIRA1-1324
 		{
 			name: "valid html",
 			args: args{
-				tCli:   tCli,
-				tCards: tCards,
-				html:   true,
+				tCli: tCli,
+				html: true,
 			},
 			wantOut: `<!DOCTYPE html>
 <html lang="en">
@@ -138,24 +136,12 @@ https://jira-site/browse/JIRA1-1324
 </html>
 `,
 		},
-		{
-			name: "empty",
-			args: args{
-				tCli:   tCli,
-				tCards: []*trello.Card{},
-			},
-			wantOut: `
-----------------------------------
-
-----------------------------------
-`,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out := &bytes.Buffer{}
-			tasks := trelloTasks(tt.args.tCards, tt.args.tCli, "https://jira-site")
-			r := newReport(tt.args.html, tasks)
+			tasks := trelloTasks(tt.args.tCli, "https://jira-site")
+			r := newReport(tt.args.html, tt.args.weekly, tasks)
 
 			// Set date related fields to fixed values for testing
 			r.Year = 2000
