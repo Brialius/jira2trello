@@ -19,13 +19,13 @@ func DoSelfUpdate(currentVersion string) {
 	}
 
 	if !found {
-		fmt.Printf("latest version for %s/%s could not be found from github repository", runtime.GOOS, runtime.GOARCH)
+		fmt.Printf("latest version for %s/%s could not be found from github repository\n", runtime.GOOS, runtime.GOARCH)
 
 		return
 	}
 
 	if latest.LessOrEqual(currentVersion) {
-		fmt.Printf("Current version (%s) is the latest", currentVersion)
+		fmt.Printf("Current version (%s) is the latest\n", currentVersion)
 
 		return
 	}
