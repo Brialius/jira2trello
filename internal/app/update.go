@@ -1,45 +1,47 @@
 package app
 
 import (
+	"context"
 	"fmt"
-	"github.com/blang/semver"
-	"github.com/rhysd/go-github-selfupdate/selfupdate"
-	"strings"
+	"github.com/creativeprojects/go-selfupdate"
+	"os"
+	"runtime"
 )
 
+const repositorySlug = "Brialius/jira2trello"
+
 func DoSelfUpdate(currentVersion string) {
-	ver := semver.MustParse(strings.TrimPrefix(currentVersion, "v"))
-
-	slug := "Brialius/jira2trello"
-	latest, found, err := selfupdate.DetectLatest(slug)
-
+	latest, found, err := selfupdate.DetectLatest(context.Background(), selfupdate.ParseSlug(repositorySlug))
 	if err != nil {
-		fmt.Println("Failed to check updates:", err)
+		fmt.Println("error occurred while detecting version:", err)
 
 		return
 	}
 
-	if latest.Version.Equals(ver) {
-		// latest version is the same as current version. It means current binary is up-to-date.
-		fmt.Println("Current binary is the latest version:", currentVersion)
+	if !found {
+		fmt.Printf("latest version for %s/%s could not be found from github repository", runtime.GOOS, runtime.GOARCH)
 
 		return
 	}
 
-	if found && latest.Version.GT(ver) {
-		fmt.Printf("New version found: %s\n", latest.Version)
-		fmt.Println("Updating...")
+	if latest.LessOrEqual(currentVersion) {
+		fmt.Printf("Current version (%s) is the latest", currentVersion)
 
-		_, err := selfupdate.UpdateSelf(ver, slug)
-
-		if err != nil {
-			fmt.Println("Binary update failed:", err)
-
-			return
-		}
-
-		fmt.Println("Successfully updated to version", latest.Version)
-		fmt.Println("Release notes:")
-		fmt.Println(latest.ReleaseNotes)
+		return
 	}
+
+	exe, err := os.Executable()
+	if err != nil {
+		fmt.Println("could not locate executable path")
+
+		return
+	}
+
+	if err := selfupdate.UpdateTo(context.Background(), latest.AssetURL, latest.AssetName, exe); err != nil {
+		fmt.Println("error occurred while updating binary:", err)
+
+		return
+	}
+
+	fmt.Println("Successfully updated to version:", latest.Version())
 }
