@@ -159,21 +159,21 @@ func trelloTasks(tCli TrelloConnector, jiraURL string) []*Task {
 		switch {
 		case tCard.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Done}):
 			done = append(done, &Task{
-				Name:   strings.TrimPrefix(tCard.Name, tCard.Key),
+				Name:   strings.TrimPrefix(tCard.Name, tCard.Key+" | "),
 				Status: doneString,
 				Link:   jiraURL + "/browse/" + tCard.Key,
 				Key:    tCard.Key,
 			})
 		case tCard.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Doing}):
 			inProgress = append(inProgress, &Task{
-				Name:   strings.TrimPrefix(tCard.Name, tCard.Key),
+				Name:   strings.TrimPrefix(tCard.Name, tCard.Key+" | "),
 				Status: doingString,
 				Link:   jiraURL + "/browse/" + tCard.Key,
 				Key:    tCard.Key,
 			})
 		case tCard.IsInAnyOfLists([]string{tCli.GetConfig().Lists.Review}):
 			inReview = append(inReview, &Task{
-				Name:   strings.TrimPrefix(tCard.Name, tCard.Key),
+				Name:   strings.TrimPrefix(tCard.Name, tCard.Key+" | "),
 				Status: reviewString,
 				Link:   jiraURL + "/browse/" + tCard.Key,
 				Key:    tCard.Key,
@@ -189,5 +189,5 @@ func trelloTasks(tCli TrelloConnector, jiraURL string) []*Task {
 }
 
 func (t *Task) String() string {
-	return fmt.Sprintf("%s%s - %s\n%s", t.Key, t.Name, t.Status, t.Link)
+	return fmt.Sprintf("%s | %s - %s\n%s", t.Key, t.Name, t.Status, t.Link)
 }

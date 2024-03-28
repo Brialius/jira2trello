@@ -112,25 +112,25 @@ https://jira-site/browse/JIRA1-1324
 <body>
 	<h1>Report 2000 week 1</h1>
 	<ul>
-	<li><a href=https://jira-site/browse/JIRA1-1289>JIRA1-1289</a>  | Test task 1289 - <strong>Done</strong></li>
-	<li><a href=https://jira-site/browse/JIRA1-1290>JIRA1-1290</a>  | Test task 1290 - <strong>Done</strong></li>
-	<li><a href=https://jira-site/browse/JIRA1-1130>JIRA1-1130</a>  | Test task 1130 - <strong>In progress</strong></li>
-	<li><a href=https://jira-site/browse/JIRA1-1131>JIRA1-1131</a>  | Test task 1131 - <strong>In progress</strong></li>
-	<li><a href=https://jira-site/browse/JIRA1-1133>JIRA1-1133</a>  | Test task 1133 - <strong>In progress</strong></li>
-	<li><a href=https://jira-site/browse/JIRA1-1195>JIRA1-1195</a>  | Test task 1195 - <strong>In progress</strong></li>
-	<li><a href=https://jira-site/browse/JIRA1-1288>JIRA1-1288</a>  | Test task 1288 - <strong>In progress</strong></li>
-	<li><a href=https://jira-site/browse/JIRA1-1304>JIRA1-1304</a>  | Test task 1304 - <strong>In progress</strong></li>
-	<li><a href=https://jira-site/browse/JIRA1-223>JIRA1-223</a>  | Test task 223 - <strong>In progress</strong></li>
-	<li><a href=https://jira-site/browse/JIRA1-375>JIRA1-375</a>  | Test task 375 - <strong>In progress</strong></li>
-	<li><a href=https://jira-site/browse/JIRA1-390>JIRA1-390</a>  | Test task 390 - <strong>In progress</strong></li>
-	<li><a href=https://jira-site/browse/JIRA1-391>JIRA1-391</a>  | Test task 391 - <strong>In progress</strong></li>
-	<li><a href=https://jira-site/browse/JIRA1-392>JIRA1-392</a>  | Test task 392 - <strong>In progress</strong></li>
-	<li><a href=https://jira-site/browse/JIRA1-431>JIRA1-431</a>  | Test task 431 - <strong>In progress</strong></li>
-	<li><a href=https://jira-site/browse/JIRA1-433>JIRA1-433</a>  | Test task 433 - <strong>In progress</strong></li>
-	<li><a href=https://jira-site/browse/JIRA1-434>JIRA1-434</a>  | Test task 434 - <strong>In progress</strong></li>
-	<li><a href=https://jira-site/browse/JIRA1-984>JIRA1-984</a>  | Test task 984 - <strong>In progress</strong></li>
-	<li><a href=https://jira-site/browse/JIRA1-987>JIRA1-987</a>  | Test task 987 - <strong>In progress</strong></li>
-	<li><a href=https://jira-site/browse/JIRA1-1324>JIRA1-1324</a>  | Test task 1324 - <strong>In review</strong></li>
+	<li><a href=https://jira-site/browse/JIRA1-1289>JIRA1-1289</a> | Test task 1289 - <strong>Done</strong></li>
+	<li><a href=https://jira-site/browse/JIRA1-1290>JIRA1-1290</a> | Test task 1290 - <strong>Done</strong></li>
+	<li><a href=https://jira-site/browse/JIRA1-1130>JIRA1-1130</a> | Test task 1130 - <strong>In progress</strong></li>
+	<li><a href=https://jira-site/browse/JIRA1-1131>JIRA1-1131</a> | Test task 1131 - <strong>In progress</strong></li>
+	<li><a href=https://jira-site/browse/JIRA1-1133>JIRA1-1133</a> | Test task 1133 - <strong>In progress</strong></li>
+	<li><a href=https://jira-site/browse/JIRA1-1195>JIRA1-1195</a> | Test task 1195 - <strong>In progress</strong></li>
+	<li><a href=https://jira-site/browse/JIRA1-1288>JIRA1-1288</a> | Test task 1288 - <strong>In progress</strong></li>
+	<li><a href=https://jira-site/browse/JIRA1-1304>JIRA1-1304</a> | Test task 1304 - <strong>In progress</strong></li>
+	<li><a href=https://jira-site/browse/JIRA1-223>JIRA1-223</a> | Test task 223 - <strong>In progress</strong></li>
+	<li><a href=https://jira-site/browse/JIRA1-375>JIRA1-375</a> | Test task 375 - <strong>In progress</strong></li>
+	<li><a href=https://jira-site/browse/JIRA1-390>JIRA1-390</a> | Test task 390 - <strong>In progress</strong></li>
+	<li><a href=https://jira-site/browse/JIRA1-391>JIRA1-391</a> | Test task 391 - <strong>In progress</strong></li>
+	<li><a href=https://jira-site/browse/JIRA1-392>JIRA1-392</a> | Test task 392 - <strong>In progress</strong></li>
+	<li><a href=https://jira-site/browse/JIRA1-431>JIRA1-431</a> | Test task 431 - <strong>In progress</strong></li>
+	<li><a href=https://jira-site/browse/JIRA1-433>JIRA1-433</a> | Test task 433 - <strong>In progress</strong></li>
+	<li><a href=https://jira-site/browse/JIRA1-434>JIRA1-434</a> | Test task 434 - <strong>In progress</strong></li>
+	<li><a href=https://jira-site/browse/JIRA1-984>JIRA1-984</a> | Test task 984 - <strong>In progress</strong></li>
+	<li><a href=https://jira-site/browse/JIRA1-987>JIRA1-987</a> | Test task 987 - <strong>In progress</strong></li>
+	<li><a href=https://jira-site/browse/JIRA1-1324>JIRA1-1324</a> | Test task 1324 - <strong>In review</strong></li>
 	</ul>
 </body>
 </html>
